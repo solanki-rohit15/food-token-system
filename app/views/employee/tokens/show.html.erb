@@ -1,0 +1,93 @@
+<% content_for :title, "Token #<%= @token.id.to_s.rjust(6,'0') %> — FoodToken" %>
+
+<div class="ft-page pb-5">
+  <div class="px-3 py-3 d-flex align-items-center gap-2">
+    <%= link_to employee_tokens_path, class: "btn btn-sm btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left"></i> Back
+    <% end %>
+    <h2 class="ft-page-title mb-0">Your Food Token</h2>
+  </div>
+
+  <div class="px-3">
+    <div class="row g-3 justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="ft-token-card text-center p-4">
+          <%# Status badge %>
+          <div class="mb-3">
+            <%= token_status_badge(@token) %>
+          </div>
+
+          <%# QR Code %>
+          <div class="ft-qr-wrapper mx-auto mb-3" id="qr-container">
+            <% if @token.active? && !@token.expired_by_time? %>
+              <%= raw @qr_svg %>
+            <% elsif @token.redeemed? %>
+              <div class="d-flex flex-column align-items-center justify-content-center h-100 text-success">
+                <i class="bi bi-check-circle-fill" style="font-size:64px"></i>
+                <div class="mt-2 fw-bold">Redeemed</div>
+              </div>
+            <% else %>
+              <div class="d-flex flex-column align-items-center justify-content-center h-100 text-danger">
+                <i class="bi bi-x-circle-fill" style="font-size:64px"></i>
+                <div class="mt-2 fw-bold">Expired</div>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="ft-token-number mb-1">Token #<%= @token.id.to_s.rjust(6, "0") %></div>
+
+          <%# Items %>
+          <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+            <% @food_items.each do |fi| %>
+              <span class="badge bg-light border text-dark"><%= fi.icon %> <%= fi.name %></span>
+            <% end %>
+          </div>
+
+          <%# Expiry info %>
+          <% if @token.active? %>
+            <div class="alert alert-info alert-sm py-2 mb-3">
+              <i class="bi bi-clock me-1"></i>
+              Valid until <strong><%= @token.expires_at.strftime("%I:%M %p") %></strong>
+            </div>
+          <% elsif @token.redeemed? %>
+            <div class="alert alert-success alert-sm py-2 mb-3">
+              <i class="bi bi-check-circle-fill me-1"></i>
+              Redeemed at <strong><%= @token.redeemed_at&.strftime("%I:%M %p") %></strong>
+            </div>
+          <% end %>
+
+          <%# Details %>
+          <table class="table table-sm text-start ft-table-sm">
+            <tr>
+              <td class="text-muted">Date</td>
+              <td class="fw-semibold"><%= @order.date.strftime("%d %b %Y") %></td>
+            </tr>
+            <tr>
+              <td class="text-muted">Employee</td>
+              <td class="fw-semibold"><%= current_user.name %></td>
+            </tr>
+            <tr>
+              <td class="text-muted">ID</td>
+              <td class="fw-semibold font-monospace"><%= current_user.employee_profile&.employee_id || "—" %></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if @token.active? && !@token.expired_by_time? %>
+  <%# Poll for redemption %>
+  <script>
+  setInterval(() => {
+    fetch('<%= confirm_redemption_employee_token_path(@token) %>', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+                 'Accept': 'application/json' }
+    }).then(r => r.json()).then(data => {
+      if (data.success) window.location.reload();
+    }).catch(() => {});
+  }, 8000);
+  </script>
+<% end %>

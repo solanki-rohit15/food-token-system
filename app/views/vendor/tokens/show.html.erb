@@ -1,0 +1,67 @@
+<% content_for :title, "Token #<%= @token.id.to_s.rjust(6,'0') %> — FoodToken" %>
+
+<div class="ft-page pb-5">
+  <div class="px-3 py-3 d-flex align-items-center gap-2">
+    <%= link_to vendor_tokens_path, class: "btn btn-sm btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left"></i>
+    <% end %>
+    <h2 class="ft-page-title mb-0">Token #<%= @token.id.to_s.rjust(6,"0") %></h2>
+    <%= token_status_badge(@token) %>
+  </div>
+
+  <div class="px-3">
+    <div class="row g-3">
+      <div class="col-md-5">
+        <div class="ft-vendor-card text-center">
+          <p class="text-muted small text-uppercase fw-semibold mb-2">Employee</p>
+          <div class="ft-avatar-xl mx-auto mb-2"><%= @employee.initials %></div>
+          <div class="fw-bold fs-6"><%= @employee.name %></div>
+          <div class="text-muted small"><%= @employee.email %></div>
+          <div class="text-muted small"><%= @employee.employee_profile&.department %></div>
+          <hr>
+          <p class="text-muted small text-uppercase fw-semibold mb-2">Selected Items</p>
+          <div class="d-flex flex-wrap justify-content-center gap-2">
+            <% @food_items.each do |fi| %>
+              <span class="badge bg-light border text-dark"><%= fi.icon %> <%= fi.name %></span>
+            <% end %>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between small text-muted">
+            <span>Expires</span>
+            <span><%= @token.expires_at.strftime("%I:%M %p") %></span>
+          </div>
+          <div class="d-flex justify-content-between small text-muted mt-1">
+            <span>Created</span>
+            <span><%= @token.created_at.strftime("%I:%M %p") %></span>
+          </div>
+          <% if @token.redeemed? %>
+            <div class="d-flex justify-content-between small text-success mt-1">
+              <span>Redeemed At</span>
+              <span><%= @token.redeemed_at.strftime("%I:%M %p") %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="col-md-7 d-flex flex-column gap-3">
+        <% if @token.redeemable? %>
+          <%= button_to "✅ Redeem This Token", redeem_vendor_token_path(@token), method: :post,
+                class: "btn ft-btn-primary w-100 py-3 fw-bold",
+                data: { turbo_confirm: "Redeem for #{@employee.name}?" } %>
+          <%= button_to "📨 Send Redemption Request", send_redemption_request_vendor_token_path(@token), method: :post,
+                class: "btn btn-outline-primary w-100" %>
+        <% elsif @token.redeemed? %>
+          <div class="alert alert-success">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            Token already redeemed at <%= @token.redeemed_at&.strftime("%I:%M %p") %>.
+          </div>
+        <% else %>
+          <div class="alert alert-danger">
+            <i class="bi bi-x-circle-fill me-2"></i>
+            Token is <%= @token.status %> and cannot be redeemed.
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

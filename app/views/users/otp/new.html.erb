@@ -1,0 +1,37 @@
+<% content_for :title, "OTP Login — FoodToken" %>
+
+<div class="ft-auth-card">
+  <div class="ft-auth-header">
+    <div class="ft-auth-logo">📧</div>
+    <h1 class="ft-auth-title">OTP Login</h1>
+    <p class="ft-auth-sub">Enter your work email to receive a one-time password</p>
+  </div>
+
+  <% if flash[:alert].present? %>
+    <div class="alert alert-danger alert-sm mb-3 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <%= flash[:alert] %>
+    </div>
+  <% end %>
+
+  <%= form_tag users_send_otp_path, method: :post do %>
+    <div class="mb-4">
+      <label class="form-label ft-label">Work Email Address</label>
+      <input type="email" name="email" value="<%= @email %>"
+             class="form-control ft-input ft-input-lg"
+             placeholder="you@company.com" autofocus required>
+      <div class="form-text text-muted mt-1">
+        <i class="bi bi-info-circle me-1"></i>A 6-digit OTP will be sent to this address
+      </div>
+    </div>
+    <button type="submit" class="btn ft-btn-primary w-100 mb-3">
+      <i class="bi bi-send me-2"></i>Send OTP
+    </button>
+  <% end %>
+
+  <div class="text-center mt-3">
+    <%= link_to new_user_session_path, class: "text-muted small text-decoration-none" do %>
+      <i class="bi bi-arrow-left me-1"></i>Back to Sign In
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,10 @@
+<% content_for :title, "Edit #{@user.name} — Admin" %>
+<div class="ft-page pb-5">
+  <div class="px-3 py-3 d-flex align-items-center gap-2">
+    <%= link_to admin_user_path(@user), class: "btn btn-sm btn-outline-secondary" do %><i class="bi bi-arrow-left"></i><% end %>
+    <h2 class="ft-page-title mb-0">Edit: <%= @user.name %></h2>
+  </div>
+  <div class="px-3"><div class="row justify-content-center"><div class="col-md-7">
+    <%= render "form", user: @user %>
+  </div></div></div>
+</div>

@@ -1,0 +1,75 @@
+<% content_for :title, "Monthly Report — Admin" %>
+<div class="ft-page pb-5">
+  <div class="px-3 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="ft-page-title mb-0">Monthly Report</h2>
+      <p class="text-muted small mb-0"><%= @month.strftime("%B %Y") %></p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <%= form_tag monthly_admin_reports_path, method: :get, class: "d-flex gap-2" do %>
+        <input type="month" name="month" value="<%= @month.strftime('%Y-%m') %>"
+               class="form-control form-control-sm ft-input" style="width:160px" onchange="this.form.submit()">
+      <% end %>
+      <%= link_to admin_reports_path, class: "btn btn-sm btn-outline-secondary" do %><i class="bi bi-arrow-left me-1"></i>Back<% end %>
+    </div>
+  </div>
+
+  <div class="px-3 mb-4">
+    <div class="row g-2">
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val"><%= @orders.count %></div>
+          <div class="ft-stat-label">Total Orders</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-success"><%= @orders.select { |o| o.token&.redeemed? }.count %></div>
+          <div class="ft-stat-label">Redeemed</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-warning"><%= @orders.select { |o| o.token&.active? }.count %></div>
+          <div class="ft-stat-label">Active</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-danger"><%= @orders.select { |o| o.token&.expired? }.count %></div>
+          <div class="ft-stat-label">Expired</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="px-3 mb-4">
+    <h5 class="fw-bold mb-2">Daily Breakdown</h5>
+    <div class="table-responsive">
+      <table class="table table-sm ft-table align-middle">
+        <thead class="table-light">
+          <tr><th>Date</th><th>Orders</th><th>Redeemed</th><th>Expired</th><th>Rate</th></tr>
+        </thead>
+        <tbody>
+          <% @daily_stats.reverse.each do |day| %>
+            <% rate = day[:orders] > 0 ? ((day[:redeemed].to_f / day[:orders]) * 100).round : 0 %>
+            <tr>
+              <td class="fw-semibold small"><%= day[:date].strftime("%d %b (%a)") %></td>
+              <td><%= day[:orders] %></td>
+              <td class="text-success fw-semibold"><%= day[:redeemed] %></td>
+              <td class="text-danger"><%= day[:expired] %></td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-fill" style="height:6px;min-width:60px">
+                    <div class="progress-bar bg-success" style="width:<%= rate %>%"></div>
+                  </div>
+                  <span class="small"><%= rate %>%</span>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

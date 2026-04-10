@@ -1,0 +1,40 @@
+<% content_for :title, "Employees — Vendor" %>
+
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3">
+    <h2 class="ft-page-title mb-1">Employees</h2>
+    <p class="text-muted small mb-0">All employees who ordered today</p>
+  </div>
+  <div class="px-3">
+    <div class="table-responsive">
+      <table class="table ft-table align-middle">
+        <thead class="table-light">
+          <tr><th>Employee</th><th>Department</th><th>Items</th><th>Token Status</th></tr>
+        </thead>
+        <tbody>
+          <% @employees.each do |emp| %>
+            <% order = emp.orders.today.includes(:food_items, :token).first %>
+            <% next unless order %>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ft-avatar-sm"><%= emp.initials %></div>
+                  <div>
+                    <div class="fw-semibold small"><%= emp.name %></div>
+                    <div class="text-muted" style="font-size:11px"><%= emp.email %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="small text-muted"><%= emp.employee_profile&.department || "—" %></td>
+              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></td>
+              <td><%= token_status_badge(order.token) %></td>
+            </tr>
+          <% end %>
+          <% if @employees.none? { |e| e.orders.today.exists? } %>
+            <tr><td colspan="4" class="text-center text-muted py-4">No employees ordered today.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

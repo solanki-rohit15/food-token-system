@@ -1,0 +1,14 @@
+<nav class="ft-bottom-nav d-lg-none">
+  <%= link_to employee_root_path, class: "ft-bottom-nav-item #{current_page?(employee_root_path) ? 'active' : ''}" do %>
+    <i class="bi bi-house"></i>
+    Home
+  <% end %>
+  <%= link_to new_employee_food_selection_path, class: "ft-bottom-nav-item #{current_page?(new_employee_food_selection_path) ? 'active' : ''}" do %>
+    <i class="bi bi-plus-circle"></i>
+    Select
+  <% end %>
+  <%= link_to employee_tokens_path, class: "ft-bottom-nav-item #{request.path.start_with?('/employee/tokens') ? 'active' : ''}" do %>
+    <i class="bi bi-qr-code"></i>
+    Token
+  <% end %>
+</nav>

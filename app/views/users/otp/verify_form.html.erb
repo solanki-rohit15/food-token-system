@@ -1,0 +1,91 @@
+<% content_for :title, "Verify OTP — FoodToken" %>
+
+<div class="ft-auth-card">
+  <div class="ft-auth-header">
+    <div class="ft-auth-logo">🔑</div>
+    <h1 class="ft-auth-title">Enter OTP</h1>
+    <p class="ft-auth-sub">
+      A 6-digit code was sent to<br>
+      <strong><%= @email || session[:otp_email] %></strong>
+    </p>
+  </div>
+
+  <% if flash.now[:alert].present? || flash[:alert].present? %>
+    <div class="alert alert-danger alert-sm mb-3 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <%= flash.now[:alert] || flash[:alert] %>
+    </div>
+  <% end %>
+
+  <%= form_tag users_verify_otp_path, method: :post, id: "otp-form" do %>
+    <div class="ft-otp-row mb-4" id="otp-inputs">
+      <% 6.times do |i| %>
+        <input type="text" inputmode="numeric" pattern="[0-9]"
+               name="otp[]" maxlength="1"
+               class="ft-otp-box form-control text-center"
+               autocomplete="<%= i == 0 ? 'one-time-code' : 'off' %>"
+               id="otp_<%= i %>">
+      <% end %>
+    </div>
+
+    <div class="ft-otp-timer text-center mb-4">
+      <span class="text-muted small">
+        <i class="bi bi-clock me-1"></i>
+        Expires in <span id="countdown" class="fw-semibold text-danger">10:00</span>
+      </span>
+    </div>
+
+    <button type="submit" class="btn ft-btn-primary w-100 mb-3">
+      <i class="bi bi-check-circle me-2"></i>Verify OTP
+    </button>
+  <% end %>
+
+  <div class="text-center mb-2">
+    <%= form_tag users_send_otp_path, method: :post, class: "d-inline" do %>
+      <input type="hidden" name="email" value="<%= @email || session[:otp_email] %>">
+      <button type="submit" class="btn btn-link text-muted small p-0">
+        <i class="bi bi-arrow-repeat me-1"></i>Resend OTP
+      </button>
+    <% end %>
+  </div>
+
+  <div class="text-center">
+    <%= link_to users_new_otp_path, class: "text-muted small text-decoration-none" do %>
+      <i class="bi bi-arrow-left me-1"></i>Change Email
+    <% end %>
+  </div>
+</div>
+
+<script>
+// Auto-advance OTP boxes
+document.querySelectorAll('.ft-otp-box').forEach((box, i, boxes) => {
+  box.addEventListener('input', () => {
+    box.value = box.value.replace(/\D/g, '');
+    if (box.value.length === 1 && i < boxes.length - 1) boxes[i + 1].focus();
+    if (Array.from(boxes).every(b => b.value)) document.getElementById('otp-form').submit();
+  });
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+  });
+  box.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+    [...text].forEach((ch, idx) => { if (boxes[idx]) boxes[idx].value = ch; });
+    const last = Math.min(text.length, boxes.length - 1);
+    boxes[last]?.focus();
+    if (text.length >= 6) document.getElementById('otp-form').submit();
+  });
+});
+document.getElementById('otp_0')?.focus();
+
+// Countdown timer
+let secs = 600;
+const cd = document.getElementById('countdown');
+const timer = setInterval(() => {
+  secs--;
+  const m = Math.floor(secs / 60).toString().padStart(2, '0');
+  const s = (secs % 60).toString().padStart(2, '0');
+  if (cd) cd.textContent = `${m}:${s}`;
+  if (secs <= 0) { clearInterval(timer); if (cd) cd.textContent = 'Expired'; }
+}, 1000);
+</script>

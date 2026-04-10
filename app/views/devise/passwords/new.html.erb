@@ -1,0 +1,30 @@
+<% content_for :title, "Reset Password — FoodToken" %>
+<div class="ft-auth-card">
+  <div class="ft-auth-header">
+    <div class="ft-auth-logo">🔒</div>
+    <h1 class="ft-auth-title">Reset Password</h1>
+    <p class="ft-auth-sub">Enter your email to receive reset instructions</p>
+  </div>
+
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
+    <% if resource.errors.any? %>
+      <div class="alert alert-danger mb-3">
+        <%= resource.errors.full_messages.first %>
+      </div>
+    <% end %>
+
+    <div class="mb-4">
+      <%= f.label :email, class: "form-label ft-label" %>
+      <%= f.email_field :email, autofocus: true, autocomplete: "email",
+          class: "form-control ft-input", placeholder: "your@company.com" %>
+    </div>
+
+    <%= f.submit "Send Reset Instructions", class: "btn ft-btn-primary w-100 mb-3" %>
+  <% end %>
+
+  <div class="text-center">
+    <%= link_to new_user_session_path, class: "text-muted small text-decoration-none" do %>
+      <i class="bi bi-arrow-left me-1"></i>Back to Sign In
+    <% end %>
+  </div>
+</div>

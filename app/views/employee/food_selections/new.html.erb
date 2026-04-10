@@ -1,0 +1,96 @@
+<% content_for :title, "Select Meals — FoodToken" %>
+
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3">
+    <h2 class="ft-page-title">Select Today's Meals</h2>
+    <p class="ft-page-sub text-muted">
+      <i class="bi bi-clock me-1"></i><%= Date.current.strftime("%A, %d %B %Y") %>
+    </p>
+  </div>
+
+  <div class="px-3 mb-3">
+    <div class="ft-info-banner">
+      <i class="bi bi-info-circle-fill text-primary me-2"></i>
+      <span class="small">Select meal categories. Availability is time-based.</span>
+    </div>
+  </div>
+
+  <%= form_tag employee_food_selections_path, method: :post, id: "meal-form" do %>
+
+    <% FoodItem::CATEGORIES.each do |cat, info| %>
+      <% setting = @meal_settings[cat.to_s] %>
+      <% available = setting ? setting.available_now? : Time.current.hour < info[:cutoff_hour] %>
+
+      <div class="ft-section px-3 mt-3">
+        <label class="ft-meal-select-item <%= available ? '' : 'disabled' %>">
+
+          <div class="ft-meal-select-check">
+            <input type="checkbox"
+                   name="categories[]"
+                   value="<%= cat %>"
+                   class="ft-meal-checkbox"
+                   <%= available ? '' : 'disabled' %>
+                   onchange="updateSelection()">
+            <div class="ft-meal-check-ui"></div>
+          </div>
+
+          <div class="ft-meal-select-emoji">
+            <%= info[:icon] %>
+          </div>
+
+          <div class="ft-meal-select-info">
+            <div class="ft-meal-select-name">
+              <%= info[:label] %>
+            </div>
+
+            <% if available %>
+              <span class="badge bg-success-subtle text-success small">
+                Available
+              </span>
+            <% else %>
+              <span class="badge bg-danger-subtle text-danger small">
+                Closed
+              </span>
+            <% end %>
+          </div>
+
+        </label>
+      </div>
+
+    <% end %>
+
+    <div class="ft-sticky-bottom px-3 py-3">
+      <div class="ft-selection-summary mb-2" id="selection-summary">
+        <span class="text-muted small" id="selected-count">No meals selected</span>
+      </div>
+
+      <button type="submit" class="btn ft-btn-primary w-100" id="generate-btn" disabled>
+        <i class="bi bi-qr-code me-2"></i>Generate Token
+      </button>
+    </div>
+
+  <% end %>
+</div>
+
+<script>
+function updateSelection() {
+  const checked = document.querySelectorAll('.ft-meal-checkbox:checked');
+  const btn = document.getElementById('generate-btn');
+  const summary = document.getElementById('selected-count');
+
+  if (checked.length === 0) {
+    btn.disabled = true;
+    summary.textContent = 'No meals selected';
+    summary.className = 'text-muted small';
+  } else {
+    btn.disabled = false;
+
+    const names = Array.from(checked).map(cb =>
+      cb.closest('.ft-meal-select-item').querySelector('.ft-meal-select-name').textContent
+    );
+
+    summary.textContent = `Selected: ${names.join(', ')}`;
+    summary.className = 'text-success small fw-semibold';
+  }
+}
+</script>

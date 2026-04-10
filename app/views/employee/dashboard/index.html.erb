@@ -1,0 +1,130 @@
+<% content_for :title, "Dashboard — CCube Food Token" %>
+
+<div class="ft-page pb-5">
+  <%# Hero header %>
+  <div class="ft-emp-hero">
+    <div class="d-flex align-items-center gap-3">
+      <div class="ft-avatar-lg">
+        <% if current_user.avatar_url.present? %>
+          <img src="<%= current_user.avatar_url %>" class="rounded-circle" width="48" height="48" alt="">
+        <% else %>
+          <%= current_user.initials %>
+        <% end %>
+      </div>
+      <div>
+        <div class="ft-greeting">Good <%= time_of_day_greeting %>, <%= current_user.name.split.first %>!</div>
+        <div class="ft-emp-dept small">
+          <%= current_user.employee_profile&.department || "Employee" %>
+          <% if current_user.employee_profile&.employee_id.present? %>
+            &bull; <%= current_user.employee_profile.employee_id %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <div class="ft-time-chip mt-3">
+      <i class="bi bi-clock me-1"></i>
+      <%= Time.current.strftime("%I:%M %p") %>
+      &bull;
+      <%= Date.current.strftime("%a, %d %b %Y") %>
+    </div>
+  </div>
+
+  <%# Today's token or CTA %>
+  <% if @active_token %>
+    <div class="ft-section px-3 mt-3">
+      <div class="ft-section-label">Today's Token</div>
+      <div class="ft-token-hero-card">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <div class="ft-token-number">Token #<%= @active_token.id.to_s.rjust(6, "0") %></div>
+            <div class="ft-token-items mt-1 text-muted small">
+              <%= @active_token.food_items.map { |fi| "#{fi.icon} #{fi.label}" }.join(" · ") %>
+            </div>
+          </div>
+          <span class="ft-status-badge ft-status-active">
+            <span class="ft-status-dot"></span> Active
+          </span>
+        </div>
+        <div class="ft-token-expiry text-muted small">
+          <i class="bi bi-clock me-1"></i>Expires at <%= @active_token.expires_at.strftime("%I:%M %p") %>
+        </div>
+        <%= link_to employee_token_path(@active_token), class: "btn ft-btn-qr w-100 mt-3" do %>
+          <i class="bi bi-qr-code me-2"></i>Show QR Code
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="ft-section px-3 mt-3">
+      <div class="ft-section-label">Today's Meal</div>
+      <div class="ft-no-token-card">
+        <div class="ft-no-token-icon">🍽️</div>
+        <h3 class="ft-no-token-title">No token yet today</h3>
+        <p class="text-muted small">Select your meals to generate a QR token</p>
+        <%= link_to new_employee_food_selection_path, class: "btn cc-btn-primary mt-2" do %>
+          <i class="bi bi-plus-circle me-2"></i>Select Meals
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Meal availability status %>
+  <div class="ft-section px-3 mt-3">
+    <div class="ft-section-label">Meal Windows</div>
+    <div class="row g-2">
+      <% FoodItem::CATEGORIES.each do |cat, info| %>
+        <% setting   = @meal_settings[cat.to_s]
+           available = setting ? setting.available_now? : Time.current.hour < info[:cutoff_hour] %>
+        <div class="col-6 col-md-3">
+          <div class="ft-card text-center p-3 <%= available ? '' : 'opacity-60' %>">
+            <div style="font-size:24px"><%= info[:icon] %></div>
+            <div class="fw-semibold small mt-1"><%= info[:label] %></div>
+            <% if setting %>
+              <div class="text-muted" style="font-size:11px"><%= setting.start_time %> – <%= setting.end_time %></div>
+            <% end %>
+            <div class="mt-1">
+              <% if available %>
+                <span class="cc-badge-open">Open</span>
+              <% else %>
+                <span class="cc-badge-closed">Closed</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Stats %>
+  <div class="ft-section px-3 mt-3">
+    <div class="ft-section-label">My Stats</div>
+    <div class="ft-stats-grid">
+      <div class="ft-stat-card">
+        <div class="ft-stat-val"><%= @stats[:total_orders] %></div>
+        <div class="ft-stat-label">Total Orders</div>
+      </div>
+      <div class="ft-stat-card">
+        <div class="ft-stat-val cc-red"><%= @stats[:this_month] %></div>
+        <div class="ft-stat-label">This Month</div>
+      </div>
+      <div class="ft-stat-card">
+        <div class="ft-stat-val text-success"><%= @stats[:redeemed_tokens] %></div>
+        <div class="ft-stat-label">Redeemed</div>
+      </div>
+    </div>
+  </div>
+
+  <%# Recent tokens %>
+  <% if @recent_tokens.any? %>
+    <div class="ft-section px-3 mt-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="ft-section-label mb-0">Recent Tokens</div>
+        <%= link_to "See all", employee_tokens_path, class: "small text-decoration-none cc-red" %>
+      </div>
+      <div class="d-flex flex-column gap-2">
+        <% @recent_tokens.each do |token| %>
+          <%= render "employee/tokens/token_row", token: token %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

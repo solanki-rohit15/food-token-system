@@ -1,0 +1,73 @@
+<% content_for :title, "Tokens — Admin" %>
+
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="ft-page-title mb-0">Token Monitor</h2>
+      <p class="text-muted small mb-0"><%= @date.strftime("%A, %d %B %Y") %> &bull; <%= @tokens.total_count %> records</p>
+    </div>
+    <%= link_to export_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-success" do %>
+      <i class="bi bi-download me-1"></i>Export CSV
+    <% end %>
+  </div>
+
+  <div class="px-3 mb-3">
+    <%= form_tag admin_tokens_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
+      <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>"
+             class="form-control form-control-sm ft-input" style="width:160px">
+      <select name="status" class="form-select form-select-sm ft-input" style="width:140px">
+        <option value="">All Status</option>
+        <option value="active"   <%= "selected" if params[:status]=="active"   %>>Active</option>
+        <option value="redeemed" <%= "selected" if params[:status]=="redeemed" %>>Redeemed</option>
+        <option value="expired"  <%= "selected" if params[:status]=="expired"  %>>Expired</option>
+      </select>
+      <input type="text" name="search" value="<%= params[:search] %>"
+             class="form-control form-control-sm ft-input" placeholder="Search employee..."
+             style="width:180px">
+      <button type="submit" class="btn btn-sm ft-btn-primary">
+        <i class="bi bi-search me-1"></i>Filter
+      </button>
+      <%= link_to "Today", admin_tokens_path, class: "btn btn-sm btn-outline-secondary" %>
+    <% end %>
+  </div>
+
+  <div class="px-3">
+    <div class="table-responsive">
+      <table class="table ft-table align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Employee</th><th>Dept</th><th>Items</th><th>Token</th>
+            <th>Created</th><th>Status</th><th>Redeemed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tokens.each do |token| %>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ft-avatar-sm"><%= token.user.initials %></div>
+                  <div>
+                    <div class="fw-semibold small"><%= token.user.name %></div>
+                    <div class="text-muted" style="font-size:11px"><%= token.user.email %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="small text-muted"><%= token.user.employee_profile&.department || "—" %></td>
+              <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></td>
+              <td><span class="badge bg-light border text-dark font-monospace">#<%= token.id.to_s.rjust(6,"0") %></span></td>
+              <td class="small text-muted"><%= token.created_at.strftime("%I:%M %p") %></td>
+              <td><%= token_status_badge(token) %></td>
+              <td class="small text-muted"><%= token.redeemed_at&.strftime("%I:%M %p") || "—" %></td>
+            </tr>
+          <% end %>
+          <% if @tokens.empty? %>
+            <tr><td colspan="7" class="text-center text-muted py-4">No tokens found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if @tokens.respond_to?(:total_pages) && @tokens.total_pages > 1 %>
+      <div class="d-flex justify-content-center mt-3"><%= paginate @tokens %></div>
+    <% end %>
+  </div>
+</div>

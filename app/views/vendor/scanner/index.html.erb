@@ -1,0 +1,195 @@
+<% content_for :title, "QR Scanner — FoodToken" %>
+
+<div class="ft-page" id="scanner-page">
+  <div class="ft-scanner-full">
+    <%# Camera view %>
+    <div class="ft-camera-view" id="camera-view">
+      <video id="qr-video" autoplay muted playsinline class="ft-camera-video"></video>
+      <canvas id="qr-canvas" style="display:none;"></canvas>
+      <div class="ft-scan-overlay">
+        <div class="ft-scan-frame">
+          <div class="ft-corner tl"></div><div class="ft-corner tr"></div>
+          <div class="ft-corner bl"></div><div class="ft-corner br"></div>
+          <div class="ft-scan-line" id="scan-line"></div>
+        </div>
+        <p class="ft-scan-hint text-white mt-3">Point camera at employee's QR code</p>
+      </div>
+    </div>
+
+    <%# Manual entry fallback %>
+    <div class="ft-scanner-manual px-3 py-3">
+      <div class="ft-divider-text mb-2"><span>or enter token ID manually</span></div>
+      <div class="input-group">
+        <input type="text" id="manual-qr" class="form-control ft-input"
+               placeholder="Paste QR code data here..." autocomplete="off">
+        <button class="btn ft-btn-primary" onclick="verifyManual()">
+          <i class="bi bi-check-circle me-1"></i>Verify
+        </button>
+      </div>
+    </div>
+
+    <%# Result panel %>
+    <div id="scan-result" class="ft-scan-result px-3 pb-4" style="display:none;">
+      <div id="result-valid" style="display:none;">
+        <div class="ft-result-header ft-result-valid p-3 rounded-top">
+          <div class="ft-result-status-icon fs-1">✅</div>
+          <h3 class="text-white mb-0">Valid Token</h3>
+        </div>
+        <div class="ft-vendor-card mt-0 rounded-top-0">
+          <div class="ft-section-label mb-2">Employee</div>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="ft-avatar-lg bg-primary-subtle text-primary fw-bold" id="emp-initials">—</div>
+            <div>
+              <div class="fw-semibold" id="emp-name">—</div>
+              <div class="text-muted small" id="emp-email">—</div>
+              <div class="text-muted small" id="emp-dept">—</div>
+            </div>
+          </div>
+          <div class="ft-section-label mb-2">Selected Items</div>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="token-items">—</div>
+          <div class="d-flex justify-content-between text-muted small py-2 border-top">
+            <span>Token ID</span><span id="token-id-disp">—</span>
+          </div>
+          <div class="d-flex justify-content-between text-muted small py-1">
+            <span>Expires</span><span id="token-expiry">—</span>
+          </div>
+        </div>
+
+        <div class="px-3 mt-3">
+          <button class="btn ft-btn-primary w-100 mb-2" onclick="sendRedemptionRequest()" id="redeem-btn">
+            <i class="bi bi-send me-2"></i>Send Redemption Request
+          </button>
+          <button class="btn btn-success w-100 mb-2" onclick="redeemDirectly()" id="direct-redeem-btn">
+            <i class="bi bi-check-circle-fill me-2"></i>Redeem Directly
+          </button>
+          <button class="btn ft-btn-outline w-100" onclick="resetScanner()">
+            <i class="bi bi-arrow-left me-2"></i>Scan Another
+          </button>
+        </div>
+      </div>
+
+      <div id="result-invalid" style="display:none;">
+        <div class="ft-result-header ft-result-invalid p-3 rounded">
+          <div class="fs-1">❌</div>
+          <h3 class="text-white mb-0" id="invalid-title">Invalid Token</h3>
+        </div>
+        <div class="ft-vendor-card mt-3">
+          <p class="text-muted mb-0" id="invalid-message">This token is not valid.</p>
+        </div>
+        <button class="btn ft-btn-primary w-100 mt-3" onclick="resetScanner()">
+          <i class="bi bi-arrow-left me-2"></i>Try Again
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+let currentTokenId = null;
+let scanning = true;
+
+const video  = document.getElementById('qr-video');
+const canvas = document.getElementById('qr-canvas');
+const ctx    = canvas.getContext('2d');
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+  .then(stream => { video.srcObject = stream; video.play(); requestAnimationFrame(tick); })
+  .catch(() => { /* camera not available — user will use manual entry */ });
+
+function tick() {
+  if (!scanning) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.height = video.videoHeight;
+    canvas.width  = video.videoWidth;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+    if (code) { scanning = false; verifyCode(code.data); return; }
+  }
+  requestAnimationFrame(tick);
+}
+
+function verifyManual() {
+  const val = document.getElementById('manual-qr').value.trim();
+  if (val) { scanning = false; verifyCode(val); }
+}
+
+function verifyCode(data) {
+  fetch('<%= vendor_verify_scan_path %>', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify({ qr_data: data })
+  })
+  .then(r => r.json())
+  .then(result => {
+    document.getElementById('scan-result').style.display  = 'block';
+    document.getElementById('camera-view').style.display  = 'none';
+
+    if (result.valid) {
+      currentTokenId = result.token_id;
+      document.getElementById('result-valid').style.display   = 'block';
+      document.getElementById('result-invalid').style.display = 'none';
+      document.getElementById('emp-initials').textContent     = result.employee.name.split(' ').map(n=>n[0]).join('').toUpperCase();
+      document.getElementById('emp-name').textContent         = result.employee.name;
+      document.getElementById('emp-email').textContent        = result.employee.email;
+      document.getElementById('emp-dept').textContent         = result.employee.department || '';
+      document.getElementById('token-id-disp').textContent    = '#' + String(result.token_id).padStart(6,'0');
+      document.getElementById('token-expiry').textContent     = result.expires_at;
+      const itemsEl = document.getElementById('token-items');
+      itemsEl.innerHTML = result.items.map(i => `<span class="badge bg-light border text-dark">${i.icon} ${i.name}</span>`).join('');
+    } else {
+      document.getElementById('result-invalid').style.display = 'block';
+      document.getElementById('result-valid').style.display   = 'none';
+      document.getElementById('invalid-message').textContent  = result.message;
+    }
+  })
+  .catch(() => { alert('Error verifying token. Please try again.'); scanning = true; });
+}
+
+function sendRedemptionRequest() {
+  if (!currentTokenId) return;
+  const btn = document.getElementById('redeem-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass me-2"></i>Waiting for employee...';
+
+  fetch(`/vendor/tokens/${currentTokenId}/send_redemption_request`, {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken, 'Content-Type': 'application/json' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      btn.innerHTML = '<i class="bi bi-check-circle text-success me-2"></i>Request Sent!';
+    }
+  });
+}
+
+function redeemDirectly() {
+  if (!currentTokenId) return;
+  if (!confirm('Redeem this token directly?')) return;
+  const btn = document.getElementById('direct-redeem-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Redeeming...';
+
+  fetch(`/vendor/tokens/${currentTokenId}/redeem`, {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': csrfToken }
+  })
+  .then(r => {
+    if (r.redirected) { window.location.href = r.url; }
+    else { resetScanner(); }
+  });
+}
+
+function resetScanner() {
+  currentTokenId = null; scanning = true;
+  document.getElementById('scan-result').style.display  = 'none';
+  document.getElementById('camera-view').style.display  = 'block';
+  document.getElementById('result-valid').style.display = 'none';
+  document.getElementById('result-invalid').style.display = 'none';
+  document.getElementById('manual-qr').value = '';
+  requestAnimationFrame(tick);
+}
+</script>
