@@ -1,79 +1,59 @@
 class Vendor::TokensController < ApplicationController
   before_action :authenticate_user!
   before_action :ensure_vendor!
-  before_action :set_token, only: [:show, :send_redemption_request, :redeem]
+  before_action :set_token, only: [:show, :send_redemption_request]
 
-  def index
-    date = params[:date].present? ? Date.parse(params[:date]) : Date.current
-
-    @tokens = Token.for_date(date)
-                   .includes(order: [:user, :food_items])
-                   .order(created_at: :desc)
-
-    @tokens = case params[:status]
-              when "active"   then @tokens.active
-              when "redeemed" then @tokens.redeemed
-              when "expired"  then @tokens.expired
-              else                 @tokens
-              end
-
-    if params[:search].present?
-      q = "%#{params[:search]}%"
-      @tokens = @tokens.joins(order: :user)
-                       .where("users.name ILIKE ? OR users.email ILIKE ?", q, q)
-    end
-
-    @tokens = @tokens.page(params[:page]).per(20)
-    @date   = date
-  end
-
+  # ✅ SHOW
   def show
-    @order      = @token.order
-    @employee   = @token.user
-    @food_items = @token.food_items
+    @order    = @token.order
+    @employee = @order.user
+    @order_items = @order.order_items.includes(:food_item)
+    @food_items = @order.food_items
+
+    # pending requests per item
+    @pending_requests = @token.redemption_requests.pending.includes(:order_item)
   end
 
-  def redeem
-    unless @token.redeemable?
-      redirect_to vendor_token_path(@token), alert: "Token is not redeemable (#{@token.status})."
-      return
-    end
-
-    if @token.redeem!(current_user)
-      ActionCable.server.broadcast("token_#{@token.id}", {
-        event:   "redeemed",
-        message: "Your token was redeemed by #{current_user.name}"
-      })
-      redirect_to vendor_tokens_path, notice: "Token redeemed for #{@token.user.name}! ✅"
-    else
-      redirect_to vendor_token_path(@token), alert: "Could not redeem token."
-    end
+  # ✅ INDEX
+  def index
+    @date = params[:date].present? ? Date.parse(params[:date]) : Date.current
+    @tokens = Token.for_date(@date).page(params[:page])
   end
 
+  # ✅ SEND REQUEST (PER CATEGORY)
   def send_redemption_request
-    unless @token.redeemable?
-      render json: { success: false, message: "Token is not redeemable" } and return
-    end
+  order_item = OrderItem.find(params[:order_item_id])
 
-    ActionCable.server.broadcast("user_#{@token.user.id}", {
-      event:    "redemption_request",
-      token_id: @token.id,
-      vendor:   current_user.name,
-      items:    @token.summary
-    })
-
-    render json: { success: true, message: "Redemption request sent to employee" }
+  unless @token.redeemable?
+    return render json: { success: false, message: "Token not redeemable" }, status: :unprocessable_entity
   end
+
+  if RedemptionRequest.exists?(order_item: order_item, status: :pending)
+    return render json: { success: false, message: "Already requested for this item" }, status: :unprocessable_entity
+  end
+
+  req = RedemptionRequest.create!(
+    token: @token,
+    order_item: order_item,   # ✅ KEY FIX
+    vendor: current_user,
+    status: :pending
+  )
+
+  ActionCable.server.broadcast("user_#{@token.user.id}", {
+    event: "redemption_request",
+    message: "#{current_user.name} wants to redeem #{order_item.food_item.category_label}"
+  })
+
+  render json: { success: true }
+end
 
   private
 
   def set_token
     @token = Token.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    redirect_to vendor_tokens_path, alert: "Token not found."
   end
 
   def ensure_vendor!
-    redirect_to root_path, alert: "Access denied." unless current_user.vendor?
+    redirect_to root_path unless current_user.vendor?
   end
 end

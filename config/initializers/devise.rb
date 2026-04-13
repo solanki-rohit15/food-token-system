@@ -26,7 +26,7 @@ Devise.setup do |config|
   # with default "from" parameter.
   # config.mailer_sender = 'please-change-me-at-config-initializers-devise@example.com'
 
-config.mailer_sender = 'noreplyfoodtoken.ccube@gmail.com'
+  config.mailer_sender = ENV.fetch("MAILER_FROM", "noreplyfoodtoken.ccube@gmail.com")
 
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'
@@ -310,18 +310,33 @@ config.mailer_sender = 'noreplyfoodtoken.ccube@gmail.com'
   config.responder.error_status = :unprocessable_content
   config.responder.redirect_status = :see_other
 
-config.omniauth :google_oauth2,
-  ENV['GOOGLE_CLIENT_ID'],
-  ENV['GOOGLE_CLIENT_SECRET']
-  {
-    scope: "email,profile",
-    prompt: "select_account",
-    client_options: {
-               ssl: {
-                 ca_file: ENV['SSL_CERT_FILE'] || '/usr/local/etc/openssl@3/cert.pem'
-               }
-             }
-  }
+
+  # ── Google OAuth SSL Fix ──────────────────────────────────────────
+  # Root cause of SSL_CTX_load_verify_file: BIO lib error:
+  #   ca_file path was hardcoded to a non-existent OS-specific path.
+  #   Fix: resolve at boot-time; pass empty hash if no cert file found
+  #   (OpenSSL then uses its compiled-in default store, which works on all OSes).
+  OAUTH_SSL_OPTS = begin
+    ca_candidates = [
+      ENV.fetch("SSL_CERT_FILE", nil),
+      "/etc/ssl/certs/ca-certificates.crt",   # Debian/Ubuntu/Docker
+      "/etc/ssl/cert.pem",                     # Alpine Linux / macOS system
+      "/usr/local/etc/openssl@3/cert.pem",     # macOS Homebrew openssl@3
+      "/usr/local/etc/openssl/cert.pem",       # macOS Homebrew openssl
+      "/System/Library/OpenSSL/certs/cert.pem" # macOS legacy
+    ].compact
+    found = ca_candidates.find { |p| p && File.exist?(p) }
+    found ? { ca_file: found, verify: true } : {}
+  end.freeze
+
+  config.omniauth :google_oauth2,
+    ENV.fetch("GOOGLE_CLIENT_ID"),
+    ENV.fetch("GOOGLE_CLIENT_SECRET"),
+    {
+      scope:  "email,profile",
+      prompt: "select_account",
+      client_options: { ssl: OAUTH_SSL_OPTS }
+    }
 
   # ==> Configuration for :registerable
 

@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  ALLOWED_OAUTH_DOMAIN = ENV.fetch("GOOGLE_ALLOWED_DOMAIN", "ccube.com")
+
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
          :confirmable, :lockable, :trackable,
@@ -6,10 +8,10 @@ class User < ApplicationRecord
 
   enum :role, { employee: 0, vendor: 1, admin: 2 }
 
-  has_many :orders,             dependent: :destroy
-  has_many :otp_verifications,  dependent: :destroy
-  has_one  :employee_profile,   dependent: :destroy
-  has_one  :vendor_profile,     dependent: :destroy
+  has_many :orders,            dependent: :destroy
+  has_many :otp_verifications, dependent: :destroy
+  has_one  :employee_profile,  dependent: :destroy
+  has_one  :vendor_profile,    dependent: :destroy
 
   validates :name,  presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }
@@ -22,38 +24,45 @@ class User < ApplicationRecord
 
   before_create :set_defaults
 
-  # ── Google OAuth ──────────────────────────────────────────────────
-  def self.from_omniauth(auth)
-    where(provider: auth.provider, uid: auth.uid).first_or_initialize.tap do |user|
-      user.email        = auth.info.email
-      user.name         = auth.info.name
-      user.avatar_url   = auth.info.image
-      user.role       ||= :employee
-      user.active       = true
-      user.confirmed_at = Time.current
-      user.password     = Devise.friendly_token[0, 20] if user.encrypted_password.blank?
-      user.save!
-    end
-  end
+  # ── Google OAuth (domain-restricted) ──────────────────────────────
+  def self.from_google_oauth(auth)
+    email  = auth.info.email.to_s.downcase
+    domain = email.split("@").last
 
-  def self.find_or_create_for_google(auth)
-    user = find_by(provider: auth.provider, uid: auth.uid) ||
-           find_by(email: auth.info.email)
+    unless domain == ALLOWED_OAUTH_DOMAIN
+      raise "Only @#{ALLOWED_OAUTH_DOMAIN} accounts are allowed to sign in with Google."
+    end
+
+    user = find_by(provider: auth.provider, uid: auth.uid) || find_by(email: email)
 
     if user
-      user.update(
-        provider:   auth.provider,
-        uid:        auth.uid,
-        avatar_url: auth.info.image,
+      user.update!(
+        provider:     auth.provider,
+        uid:          auth.uid,
+        avatar_url:   auth.info.image,
         confirmed_at: user.confirmed_at || Time.current
       )
       user
     else
-      from_omniauth(auth)
+      create!(
+        email:        email,
+        name:         auth.info.name,
+        avatar_url:   auth.info.image,
+        provider:     auth.provider,
+        uid:          auth.uid,
+        role:         :employee,
+        active:       true,
+        confirmed_at: Time.current,
+        password:     Devise.friendly_token[0, 20]
+      )
     end
   end
 
-  # ── Password setup ────────────────────────────────────────────────
+  # ── First-login password change ────────────────────────────────────
+  def must_change_password?
+    must_change_password
+  end
+
   def needs_password_setup?
     encrypted_password.blank? && provider.blank?
   end

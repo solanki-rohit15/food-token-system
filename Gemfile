@@ -37,7 +37,8 @@ gem "sidekiq-scheduler", "~> 5.0"
 gem "redis", "~> 5.0"
 
 # QR Code generation
-gem "rqrcode", "~> 2.2"
+gem 'rqrcode'
+gem 'chunky_png'
 
 
 # Phone validation
@@ -111,3 +112,5 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "dotenv-rails", "~> 3.2"

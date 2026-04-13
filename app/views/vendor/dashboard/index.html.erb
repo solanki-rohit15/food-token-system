@@ -1,22 +1,39 @@
 <% content_for :title, "Vendor Dashboard — FoodToken" %>
 
 <div class="ft-page pb-5">
-  <%# Header %>
   <div class="ft-vendor-header px-3 pt-3 pb-2">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
         <h2 class="ft-page-title mb-0">Vendor Dashboard</h2>
         <p class="text-muted small mb-0">
-          <%= @date == Date.current ? "Today" : @date.strftime("%A, %d %B %Y") %>
+          <%= @view_mode == "monthly" ? "Monthly Report" : (@date == Date.current ? "Today" : @date.strftime("%A, %d %B %Y")) %>
         </p>
       </div>
       <div class="d-flex gap-2 align-items-center flex-wrap">
-        <form method="get" class="d-flex align-items-center gap-1">
-          <input type="date" name="date" value="<%= @date %>"
-                 max="<%= Date.current %>"
-                 class="form-control form-control-sm ft-input"
-                 style="width:160px" onchange="this.form.submit()">
-        </form>
+        <%# View mode toggle %>
+        <div class="btn-group btn-group-sm">
+          <%= link_to "Daily",   vendor_root_path(view: "daily"),   class: "btn #{@view_mode == 'daily'   ? 'btn-primary' : 'btn-outline-secondary'}" %>
+          <%= link_to "Monthly", vendor_root_path(view: "monthly"), class: "btn #{@view_mode == 'monthly' ? 'btn-primary' : 'btn-outline-secondary'}" %>
+        </div>
+
+        <% if @view_mode == "monthly" %>
+          <form method="get" class="d-flex align-items-center gap-1">
+            <input type="hidden" name="view" value="monthly">
+            <input type="month" name="month" value="<%= @month.strftime('%Y-%m') %>"
+                   max="<%= Date.current.strftime('%Y-%m') %>"
+                   class="form-control form-control-sm ft-input" style="width:160px"
+                   onchange="this.form.submit()">
+          </form>
+        <% else %>
+          <form method="get" class="d-flex align-items-center gap-1">
+            <input type="hidden" name="view" value="daily">
+            <input type="date" name="date" value="<%= @date %>"
+                   max="<%= Date.current %>"
+                   class="form-control form-control-sm ft-input" style="width:160px"
+                   onchange="this.form.submit()">
+          </form>
+        <% end %>
+
         <%= link_to vendor_scan_path, class: "btn ft-btn-scan" do %>
           <i class="bi bi-qr-code-scan me-2"></i>Scan QR
         <% end %>
@@ -24,104 +41,190 @@
     </div>
   </div>
 
-  <%# Stats %>
-  <div class="px-3 mt-2">
-    <div class="row g-2">
-      <div class="col-6 col-md-3">
-        <div class="ft-stat-card">
-          <div class="ft-stat-val"><%= @stats[:total_selected] %></div>
-          <div class="ft-stat-label">Total Selected</div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="ft-stat-card">
-          <div class="ft-stat-val text-success"><%= @stats[:redeemed] %></div>
-          <div class="ft-stat-label">Redeemed</div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="ft-stat-card">
-          <div class="ft-stat-val text-warning"><%= @stats[:unredeemed] %></div>
-          <div class="ft-stat-label">Pending</div>
-        </div>
-      </div>
-      <div class="col-6 col-md-3">
-        <div class="ft-stat-card">
-          <div class="ft-stat-val text-danger"><%= @stats[:expired] %></div>
-          <div class="ft-stat-label">Expired</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <%# ─── DAILY VIEW ─────────────────────────────────────────── %>
+  <% if @view_mode == "daily" %>
 
-  <%# Meal Breakdown %>
-  <% if @meal_counts.any? { |_, c| c > 0 } %>
-    <div class="ft-section px-3 mt-3">
-      <div class="ft-section-label">Meal Breakdown</div>
-      <div class="ft-vendor-card">
-        <% @meal_counts.each do |cat, count| %>
-          <% info = FoodItem::CATEGORIES[cat.to_s]; next unless info %>
-          <div class="ft-meal-breakdown-row py-2 border-bottom">
-            <div class="ft-meal-bd-icon"><%= info[:icon] %></div>
-            <div class="ft-meal-bd-name ms-2" style="min-width:100px"><%= info[:label] %></div>
-            <div class="ft-meal-bd-bar flex-fill mx-3">
-              <div class="progress" style="height:8px;">
-                <% total = [@stats[:total_selected].to_f, 1].max
-                   pct   = [(count.to_f / total * 100).round, 100].min %>
-                <div class="progress-bar bg-<%= info[:color] %>" style="width:<%= pct %>%"></div>
-              </div>
-            </div>
-            <div class="ft-meal-bd-count fw-bold"><%= count %></div>
+    <%# Stats row %>
+    <div class="px-3 mt-2">
+      <div class="row g-2">
+        <div class="col-6 col-md-3">
+          <div class="ft-stat-card">
+            <div class="ft-stat-val"><%= @stats[:total_selected] %></div>
+            <div class="ft-stat-label">Total Tokens</div>
           </div>
-        <% end %>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="ft-stat-card">
+            <div class="ft-stat-val text-success"><%= @stats[:redeemed] %></div>
+            <div class="ft-stat-label">Redeemed</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="ft-stat-card">
+            <div class="ft-stat-val text-warning"><%= @stats[:unredeemed] %></div>
+            <div class="ft-stat-label">Pending</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="ft-stat-card">
+            <div class="ft-stat-val text-primary"><%= currency(@stats[:total_amount]) %></div>
+            <div class="ft-stat-label">Total Amount</div>
+          </div>
+        </div>
       </div>
     </div>
-  <% end %>
 
-  <%# Recent scans %>
-  <% if @recent_scans.any? %>
-    <div class="ft-section px-3 mt-3">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="ft-section-label mb-0">Recent Redemptions</div>
-        <%= link_to "View all", vendor_tokens_path, class: "small text-primary text-decoration-none" %>
+    <%# Meal breakdown with pricing %>
+    <% if @meal_summary.any? { |_, v| v[:count] > 0 } %>
+      <div class="ft-section px-3 mt-3">
+        <div class="ft-section-label">Meal Breakdown (Redeemed)</div>
+        <div class="ft-vendor-card">
+          <div class="table-responsive">
+            <table class="table table-sm ft-table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Category</th>
+                  <th class="text-center">Count</th>
+                  <th class="text-end">Unit Price</th>
+                  <th class="text-end">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @meal_summary.each do |cat, data| %>
+                  <% next if data[:count] == 0 %>
+                  <tr>
+                    <td><%= data[:icon] %> <%= data[:label] %></td>
+                    <td class="text-center fw-bold"><%= data[:count] %></td>
+                    <td class="text-end text-muted"><%= currency(data[:price]) %></td>
+                    <td class="text-end fw-bold"><%= currency(data[:amount]) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="3" class="fw-bold">Grand Total</td>
+                  <td class="text-end fw-bold text-primary">
+                    <%= currency(@meal_summary.values.sum { |v| v[:amount] }) %>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="table-responsive">
-        <table class="table table-sm ft-table align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Employee</th>
-              <th>Items</th>
-              <th>Token</th>
-              <th>Redeemed At</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% @recent_scans.each do |token| %>
-              <tr>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="ft-avatar-sm"><%= token.user.initials %></div>
-                    <div>
-                      <div class="fw-semibold small"><%= token.user.name %></div>
-                      <div class="text-muted" style="font-size:11px;"><%= token.user.employee_profile&.department %></div>
+    <% end %>
+
+    <%# Recent redemptions %>
+    <% if @recent_scans.any? %>
+      <div class="ft-section px-3 mt-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="ft-section-label mb-0">Recent Redemptions</div>
+          <%= link_to "View all", vendor_tokens_path, class: "small text-primary text-decoration-none" %>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm ft-table align-middle mb-0">
+            <thead class="table-light">
+              <tr><th>Employee</th><th>Categories</th><th>Token</th><th>Redeemed At</th></tr>
+            </thead>
+            <tbody>
+              <% @recent_scans.each do |token| %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="ft-avatar-sm"><%= token.user.initials %></div>
+                      <div>
+                        <div class="fw-semibold small"><%= token.user.name %></div>
+                        <div class="text-muted" style="font-size:11px"><%= token.user.employee_profile&.department %></div>
+                      </div>
                     </div>
-                  </div>
+                  </td>
+                  <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+                  <td><span class="badge bg-success-subtle text-success border border-success-subtle font-monospace"><%= token.token_number %></span></td>
+                  <td class="small text-muted"><%= token.redeemed_at&.strftime("%I:%M %p") %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+
+    <% if @today_tokens.none? %>
+      <div class="px-3 mt-4 text-center">
+        <div style="font-size:48px">🍽️</div>
+        <p class="text-muted">No tokens for <%= @date == Date.current ? "today" : @date.strftime("%b %d") %> yet.</p>
+      </div>
+    <% end %>
+
+  <%# ─── MONTHLY VIEW ────────────────────────────────────────── %>
+  <% else %>
+
+    <%# Monthly totals %>
+    <div class="ft-section px-3 mt-3">
+      <div class="ft-section-label">Monthly Summary — <%= @month.strftime("%B %Y") %></div>
+      <div class="ft-vendor-card">
+        <div class="table-responsive">
+          <table class="table table-sm ft-table align-middle mb-0">
+            <thead class="table-light">
+              <tr><th>Category</th><th class="text-center">Count</th><th class="text-end">Unit Price</th><th class="text-end">Total</th></tr>
+            </thead>
+            <tbody>
+              <% @monthly_summary.each do |cat, data| %>
+                <% next if data[:count] == 0 %>
+                <tr>
+                  <td><%= data[:icon] %> <%= data[:label] %></td>
+                  <td class="text-center fw-bold"><%= data[:count] %></td>
+                  <td class="text-end text-muted"><%= currency(data[:price]) %></td>
+                  <td class="text-end fw-bold"><%= currency(data[:amount]) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <td colspan="3" class="fw-bold">Grand Total</td>
+                <td class="text-end fw-bold text-primary fs-6">
+                  <%= currency(@monthly_summary.values.sum { |v| v[:amount] }) %>
                 </td>
-                <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></td>
-                <td><span class="badge bg-success-subtle text-success border border-success-subtle">#<%= token.id.to_s.rjust(5,"0") %></span></td>
-                <td class="small text-muted"><%= token.redeemed_at&.strftime("%I:%M %p") %></td>
               </tr>
-            <% end %>
-          </tbody>
-        </table>
+            </tfoot>
+          </table>
+        </div>
       </div>
     </div>
-  <% end %>
 
-  <% if @today_tokens.none? %>
-    <div class="px-3 mt-4 text-center">
-      <div style="font-size:48px">🍽️</div>
-      <p class="text-muted">No tokens for <%= @date == Date.current ? "today" : @date.strftime("%b %d") %> yet.</p>
-    </div>
+    <%# Day-by-day breakdown %>
+    <% if @daily_breakdown.any? { |d| d[:total] > 0 } %>
+      <div class="ft-section px-3 mt-3">
+        <div class="ft-section-label">Daily Breakdown</div>
+        <div class="ft-vendor-card p-0">
+          <div class="table-responsive">
+            <table class="table table-sm ft-table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <% FoodItem::CATEGORIES.each do |_, info| %>
+                    <th class="text-center"><%= info[:icon] %></th>
+                  <% end %>
+                  <th class="text-end">Day Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @daily_breakdown.each do |day| %>
+                  <% next if day[:total] == 0 %>
+                  <tr>
+                    <td class="small fw-semibold"><%= day[:date].strftime("%d %b") %></td>
+                    <% FoodItem::CATEGORIES.each_key do |cat| %>
+                      <td class="text-center small"><%= day[:summary][cat]&.dig(:count) || 0 %></td>
+                    <% end %>
+                    <td class="text-end fw-bold"><%= currency(day[:total]) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
   <% end %>
 </div>

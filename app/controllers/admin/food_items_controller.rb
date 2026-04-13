@@ -1,60 +1,57 @@
 class Admin::FoodItemsController < ApplicationController
   before_action :authenticate_user!
   before_action :ensure_admin!
-  before_action :set_food_item, only: [:show, :edit, :update, :destroy, :toggle_active]
+  before_action :set_food_item, only: [:destroy, :toggle_active]
 
   def index
-    @food_items = FoodItem.order(:sort_order, :category)
+    @category_items = FoodItem::CATEGORIES.map do |cat, info|
+      { key: cat, info: info, item: FoodItem.find_by(category: cat) }
+    end
   end
 
-  def show; end
-
-  def new
-    @food_item = FoodItem.new(active: true)
-  end
-
+  # POST /admin/food_items — checkbox form activates/deactivates categories
   def create
-    @food_item = FoodItem.new(food_item_params)
-    if @food_item.save
-      redirect_to admin_food_items_path, notice: "Food item added."
-    else
-      render :new, status: :unprocessable_entity
-    end
-  end
+    selected = Array(params[:categories]).map(&:to_s).uniq
+                                         .select { |c| FoodItem::CATEGORIES.key?(c) }
 
-  def edit; end
+    ActiveRecord::Base.transaction do
+      FoodItem::CATEGORIES.each_with_index do |(cat, _), idx|
+        item = FoodItem.find_or_initialize_by(category: cat)
+        item.sort_order = idx
 
-  def update
-    if @food_item.update(food_item_params)
-      redirect_to admin_food_items_path, notice: "Food item updated."
-    else
-      render :edit, status: :unprocessable_entity
+        if selected.include?(cat)
+          item.active = true
+          item.save!
+        elsif item.persisted?
+          item.update!(active: false)
+        end
+      end
     end
-  end
 
-  def destroy
-    if @food_item.order_items.exists?
-      redirect_to admin_food_items_path, alert: "Cannot delete — item has existing orders."
-    else
-      @food_item.destroy
-      redirect_to admin_food_items_path, notice: "Food item deleted."
-    end
+    redirect_to admin_food_items_path, notice: "Food categories updated successfully."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to admin_food_items_path, alert: e.message
   end
 
   def toggle_active
     @food_item.update!(active: !@food_item.active?)
-    status = @food_item.active? ? "activated" : "deactivated"
-    redirect_back fallback_location: admin_food_items_path, notice: "Food item #{status}."
+    redirect_back fallback_location: admin_food_items_path,
+                  notice: "#{@food_item.category_label} #{@food_item.active? ? 'activated' : 'deactivated'}."
+  end
+
+  def destroy
+    if @food_item.order_items.exists?
+      redirect_to admin_food_items_path, alert: "Cannot delete — category has existing orders."
+    else
+      @food_item.destroy!
+      redirect_to admin_food_items_path, notice: "Category removed."
+    end
   end
 
   private
 
   def set_food_item
     @food_item = FoodItem.find(params[:id])
-  end
-
-  def food_item_params
-    params.require(:food_item).permit(:category, :active, :sort_order)
   end
 
   def ensure_admin!

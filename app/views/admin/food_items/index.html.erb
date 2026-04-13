@@ -1,95 +1,69 @@
-<% content_for :title, "Food Items — Admin" %>
+<% content_for :title, "Food Categories — Admin" %>
 
 <div class="ft-page pb-5">
   <div class="ft-page-header px-3 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
-      <h2 class="ft-page-title mb-0">Food Items</h2>
-      <p class="text-muted small mb-0">Manage cafeteria categories</p>
+      <h2 class="ft-page-title mb-0">Food Categories</h2>
+      <p class="text-muted small mb-0">Select which meal categories are available to employees</p>
     </div>
-    <%= link_to new_admin_food_item_path, class: "btn ft-btn-primary btn-sm" do %>
-      <i class="bi bi-plus-lg me-1"></i>Add Item
-    <% end %>
   </div>
 
   <div class="px-3">
-    <% FoodItem::CATEGORIES.each do |cat, info| %>
-      <% items = @food_items.select { |fi| fi.category == cat.to_s } %>
-      <% next if items.empty? %>
+    <%= form_tag admin_food_items_path, method: :post do %>
 
-      <div class="mb-4">
-        <!-- Category Header -->
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="fs-4"><%= info[:icon] %></span>
-          <h5 class="mb-0 fw-bold"><%= info[:label] %></h5>
-          <span class="badge bg-secondary"><%= items.count %></span>
+      <div class="card ft-card mb-3">
+        <div class="card-header bg-white">
+          <h5 class="mb-0 fw-bold">Active Categories</h5>
+          <p class="text-muted small mb-0">Check all categories that should be visible to employees</p>
         </div>
+        <div class="card-body">
+          <% @category_items.each do |entry| %>
+            <% cat  = entry[:key]
+               info = entry[:info]
+               item = entry[:item] %>
 
-        <!-- Table -->
-        <div class="table-responsive">
-          <table class="table ft-table align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <% items.each do |item| %>
-                <tr>
-                  <!-- CATEGORY ONLY -->
-                  <td class="fw-semibold">
-                    <%= item.icon %> <%= item.category_label %>
-                  </td>
-
-                  <!-- STATUS -->
-                  <td>
-                    <% if item.active? %>
-                      <span class="badge bg-success-subtle text-success border border-success-subtle">
-                        Active
+            <div class="d-flex align-items-center gap-3 py-3 border-bottom">
+              <div class="form-check mb-0">
+                <input type="checkbox"
+                       class="form-check-input"
+                       name="categories[]"
+                       value="<%= cat %>"
+                       id="cat_<%= cat %>"
+                       <%= item&.active? ? "checked" : "" %>>
+              </div>
+              <label class="form-check-label d-flex align-items-center gap-3 flex-fill mb-0 ft-clickable"
+                     for="cat_<%= cat %>">
+                <span class="fs-3"><%= info[:icon] %></span>
+                <div class="flex-fill">
+                  <div class="fw-semibold"><%= info[:label] %></div>
+                  <div class="text-muted small">
+                    <% if item %>
+                      <span class="badge bg-<%= item.active? ? 'success' : 'secondary' %>-subtle text-<%= item.active? ? 'success' : 'secondary' %> border">
+                        <%= item.active? ? "Active" : "Inactive" %>
                       </span>
                     <% else %>
-                      <span class="badge bg-secondary-subtle text-secondary border">
-                        Inactive
-                      </span>
+                      <span class="badge bg-secondary-subtle text-secondary border">Not configured</span>
                     <% end %>
-                  </td>
-
-                  <!-- ACTIONS -->
-                  <td>
-                    <div class="d-flex gap-1">
-                      <%= link_to "Edit", edit_admin_food_item_path(item),
-                            class: "btn btn-sm btn-outline-primary" %>
-
-                      <%= button_to item.active? ? "Deactivate" : "Activate",
-                            toggle_active_admin_food_item_path(item),
-                            method: :patch,
-                            class: "btn btn-sm #{item.active? ? 'btn-outline-warning' : 'btn-outline-success'}" %>
-
-                      <% unless item.order_items.exists? %>
-                        <%= button_to "Delete",
-                              admin_food_item_path(item),
-                              method: :delete,
-                              class: "btn btn-sm btn-outline-danger",
-                              data: { turbo_confirm: "Delete this item?" } %>
-                      <% end %>
-                    </div>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-
-          </table>
+                  </div>
+                </div>
+                <div class="text-end text-muted small">
+                  <% setting = MealSetting.find_by(meal_type: cat) %>
+                  <% if setting %>
+                    <div><i class="bi bi-clock me-1"></i><%= setting.formatted_time_range %></div>
+                    <div class="fw-semibold text-dark"><%= currency(setting.price) %></div>
+                  <% end %>
+                </div>
+              </label>
+            </div>
+          <% end %>
         </div>
       </div>
-    <% end %>
 
-    <% if @food_items.empty? %>
-      <div class="text-center py-5 text-muted">
-        <div class="fs-1">🍽️</div>
-        <p>No food items yet. <%= link_to "Add one", new_admin_food_item_path %>.</p>
+      <div class="d-flex gap-2">
+        <%= submit_tag "Save Categories", class: "btn ft-btn-primary px-4" %>
+        <%= link_to "Manage Timings & Prices", admin_meal_settings_path, class: "btn btn-outline-secondary" %>
       </div>
+
     <% end %>
   </div>
 </div>

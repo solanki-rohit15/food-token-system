@@ -12,7 +12,7 @@
         <i class="bi bi-qr-code fs-3"></i>
         <div class="flex-fill">
           <div class="fw-bold">Active Token Today</div>
-          <div class="small">Token #<%= @active_token.id.to_s.rjust(6,'0') %> · Valid until <%= @active_token.expires_at.strftime("%I:%M %p") %></div>
+          <div class="small">Token #<%= @active_token.token_number %> · Valid until <%= @active_token.expires_at.strftime("%I:%M %p") %></div>
         </div>
         <%= link_to "Show QR", employee_token_path(@active_token), class: "btn btn-success btn-sm" %>
       </div>

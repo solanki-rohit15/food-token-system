@@ -1,46 +1,39 @@
 class Employee::TokensController < ApplicationController
   before_action :authenticate_user!
   before_action :ensure_employee!
-  before_action :set_token, only: [:show, :confirm_redemption]
+  before_action :set_token, only: [:show]
 
   def index
     @tokens = Token.for_user(current_user)
-                   .includes(order: :food_items)
+                   .includes(:order)
                    .order(created_at: :desc)
-                   .page(params[:page]).per(10)
-    @active_token = @tokens.find(&:active?)
+                   .page(params[:page])
   end
 
   def show
-    @order      = @token.order
-    @food_items = @order.food_items
-    @qr_svg     = @token.qr_svg
-  end
+    @order = @token.order
 
-  def confirm_redemption
-    if @token.redeemable?
-      @token.update!(status: :redeemed, redeemed_at: Time.current)
-      ActionCable.server.broadcast("token_#{@token.id}",
-        { event: "redeemed", message: "Token successfully redeemed!" })
+    # ✅ SAFE fallback (avoid nil crash)
+    @food_items = @order&.food_items || []
 
-      respond_to do |format|
-        format.html { redirect_to employee_token_path(@token), notice: "Token redeemed!" }
-        format.json { render json: { success: true } }
-      end
-    else
-      respond_to do |format|
-        format.html { redirect_to employee_token_path(@token), alert: "Token cannot be redeemed." }
-        format.json { render json: { success: false, message: "Token cannot be redeemed" }, status: :unprocessable_entity }
-      end
-    end
+    # Optional (if you still use QR somewhere)
+    @qr_svg = @token.qr_svg if @token.respond_to?(:qr_svg)
+
+    # ✅ VERY IMPORTANT: include associations to avoid nil errors
+    @requests = @token.redemption_requests
+                      .includes(:vendor, order_item: :food_item)
+                      .order(created_at: :desc)
   end
 
   private
 
   def set_token
-    @token = Token.for_user(current_user).find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    redirect_to employee_tokens_path, alert: "Token not found."
+    @token = Token.for_user(current_user).find_by(id: params[:id])
+
+    # ✅ Prevent crash if token not found
+    unless @token
+      redirect_to employee_tokens_path, alert: "Token not found"
+    end
   end
 
   def ensure_employee!

@@ -8,7 +8,7 @@ class Admin::UsersController < ApplicationController
                  .includes(:employee_profile, :vendor_profile)
                  .order(:name)
 
-    @users = @users.where(role: params[:role]) if params[:role].present?
+    @users = @users.where(role: params[:role])           if params[:role].present?
     @users = @users.where(active: params[:active] == "true") if params[:active].present?
 
     if params[:search].present?
@@ -29,12 +29,17 @@ class Admin::UsersController < ApplicationController
   end
 
   def create
-    @user = User.new(user_params)
-    @user.confirmed_at = Time.current
+    temp_password = Devise.friendly_token[0, 12]
+    @user = User.new(user_params.merge(
+      password:             temp_password,
+      password_confirmation: temp_password,
+      confirmed_at:         Time.current,
+      must_change_password: true
+    ))
 
     if @user.save
-      UserMailer.invitation_email(@user).deliver_later
-      redirect_to admin_users_path, notice: "User #{@user.name} created and invited."
+      UserMailer.invitation_email(@user, temp_password).deliver_later
+      redirect_to admin_users_path, notice: "#{@user.name} created. Login credentials sent by email."
     else
       render :new, status: :unprocessable_entity
     end
@@ -43,8 +48,7 @@ class Admin::UsersController < ApplicationController
   def edit; end
 
   def update
-    if @user.update(user_params.except(:password, :password_confirmation)
-                               .merge(update_password_params))
+    if @user.update(update_user_params)
       redirect_to admin_user_path(@user), notice: "User updated."
     else
       render :edit, status: :unprocessable_entity
@@ -52,8 +56,13 @@ class Admin::UsersController < ApplicationController
   end
 
   def destroy
-    @user.destroy
-    redirect_to admin_users_path, notice: "User removed."
+    if @user == current_user
+      redirect_to admin_users_path, alert: "You cannot delete your own account."
+      return
+    end
+    name = @user.name
+    @user.destroy!
+    redirect_to admin_users_path, notice: "#{name} has been deleted."
   end
 
   def toggle_active
@@ -63,7 +72,9 @@ class Admin::UsersController < ApplicationController
   end
 
   def resend_invitation
-    UserMailer.invitation_email(@user).deliver_later
+    temp_password = Devise.friendly_token[0, 12]
+    @user.update!(password: temp_password, password_confirmation: temp_password, must_change_password: true)
+    UserMailer.invitation_email(@user, temp_password).deliver_later
     redirect_back fallback_location: admin_user_path(@user), notice: "Invitation resent to #{@user.email}."
   end
 
@@ -74,12 +85,16 @@ class Admin::UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:name, :email, :role, :phone, :password, :password_confirmation, :active)
+    params.require(:user).permit(:name, :email, :role, :phone, :active)
   end
 
-  def update_password_params
-    return {} if params.dig(:user, :password).blank?
-    { password: params[:user][:password], password_confirmation: params[:user][:password_confirmation] }
+  def update_user_params
+    permitted = params.require(:user).permit(:name, :email, :role, :phone, :active,
+                                             :password, :password_confirmation)
+    # Strip blank password fields so existing password is not wiped
+    permitted.delete(:password)              if permitted[:password].blank?
+    permitted.delete(:password_confirmation) if permitted[:password_confirmation].blank?
+    permitted
   end
 
   def ensure_admin!

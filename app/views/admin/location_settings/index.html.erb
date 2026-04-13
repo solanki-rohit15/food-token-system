@@ -1,102 +1,136 @@
 <% content_for :title, "Location Settings — Admin" %>
 
-<div class="cc-page pb-5">
-  <div class="cc-page-header px-3 py-3">
-    <h2 class="cc-page-title mb-1">Location Access Settings</h2>
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3">
+    <h2 class="ft-page-title mb-1">GPS Location Settings</h2>
     <p class="text-muted small mb-0">
-      Control where employees can access the system.
-      <strong>In development, restrictions are always bypassed.</strong>
+      Control where employees can access the system using browser GPS.
     </p>
   </div>
 
   <div class="px-3 mt-3">
-    <%# Warning about location causing logout %>
-    <div class="alert alert-info d-flex gap-2 mb-3">
-      <i class="bi bi-shield-check fs-5 mt-1"></i>
+    <div class="alert alert-info d-flex gap-2 mb-4">
+      <i class="bi bi-info-circle-fill fs-5 mt-1 flex-shrink-0"></i>
       <div>
-        <strong>Safe Mode:</strong> Location restrictions only show a warning — users are
-        <em>never</em> automatically logged out. Enable only when users are in-office.
+        <strong>How it works:</strong> When enabled, employees' browsers will be
+        prompted for GPS permission on login. Their coordinates are compared against
+        the office location you set below. If they are outside the radius, access is
+        blocked. If they deny location permission, access is also blocked.
+        <br><strong>Leave disabled</strong> to allow access from anywhere.
       </div>
     </div>
 
     <%= form_tag admin_location_settings_path, method: :patch do %>
-      <div class="row g-3">
-        <%# IP restriction %>
-        <div class="col-md-6">
-          <div class="ft-card h-100">
-            <h5 class="fw-bold mb-3">
-              <i class="bi bi-hdd-network me-2 cc-red"></i>IP-Based Restriction
-            </h5>
-            <div class="form-check form-switch mb-3">
-              <input type="hidden" name="location_setting[ip][enabled]" value="0">
-              <input class="form-check-input" type="checkbox"
-                     name="location_setting[ip][enabled]" value="1"
-                     id="ip-enabled"
-                     <%= @ip_setting.enabled? ? "checked" : "" %>>
-              <label class="form-check-label fw-semibold" for="ip-enabled">
-                Enable IP Restriction
-              </label>
-            </div>
-            <div class="mb-2">
-              <label class="form-label ft-label">Allowed IP Range (CIDR)</label>
-              <input type="text"
-                     name="location_setting[ip][ip_range]"
-                     value="<%= @ip_setting.ip_range.presence || '192.168.1.0/24' %>"
+      <div class="card ft-card mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0 fw-bold">
+            <i class="bi bi-geo-alt-fill me-2 text-danger"></i>GPS Restriction
+          </h5>
+        </div>
+        <div class="card-body">
+
+          <%# Enable toggle %>
+          <div class="form-check form-switch mb-4">
+            <input type="hidden"   name="location_setting[enabled]" value="0">
+            <input type="checkbox" name="location_setting[enabled]" value="1"
+                   class="form-check-input" id="gps-enabled"
+                   <%= @setting.enabled? ? "checked" : "" %>>
+            <label class="form-check-label fw-semibold" for="gps-enabled">
+              Enable GPS Restriction
+            </label>
+            <div class="form-text">When enabled, employees must be within the radius below.</div>
+          </div>
+
+          <%# Location name %>
+          <div class="mb-3">
+            <label class="form-label ft-label">Location Name</label>
+            <input type="text" name="location_setting[name]"
+                   value="<%= @setting.name %>"
+                   class="form-control ft-input"
+                   placeholder="e.g. Main Office">
+          </div>
+
+          <%# Coordinates %>
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label ft-label">Office Latitude</label>
+              <input type="number" step="0.000001" name="location_setting[latitude]"
+                     value="<%= @setting.latitude %>"
                      class="form-control ft-input font-monospace"
-                     placeholder="192.168.1.0/24">
-              <div class="form-text small">e.g. 192.168.1.0/24 or 10.0.0.0/8</div>
+                     placeholder="22.719600">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label ft-label">Office Longitude</label>
+              <input type="number" step="0.000001" name="location_setting[longitude]"
+                     value="<%= @setting.longitude %>"
+                     class="form-control ft-input font-monospace"
+                     placeholder="75.857700">
             </div>
           </div>
-        </div>
 
-        <%# GPS restriction %>
-        <div class="col-md-6">
-          <div class="ft-card h-100">
-            <h5 class="fw-bold mb-3">
-              <i class="bi bi-geo-alt me-2 cc-red"></i>GPS-Based Restriction
-            </h5>
-            <div class="form-check form-switch mb-3">
-              <input type="hidden" name="location_setting[gps][enabled]" value="0">
-              <input class="form-check-input" type="checkbox"
-                     name="location_setting[gps][enabled]" value="1"
-                     id="gps-enabled"
-                     <%= @gps_setting.enabled? ? "checked" : "" %>>
-              <label class="form-check-label fw-semibold" for="gps-enabled">
-                Enable GPS Restriction
-              </label>
-            </div>
-            <div class="row g-2 mb-2">
-              <div class="col-6">
-                <label class="form-label ft-label">Latitude</label>
-                <input type="number" step="0.000001"
-                       name="location_setting[gps][latitude]"
-                       value="<%= @gps_setting.latitude %>"
-                       class="form-control ft-input" placeholder="22.7196">
-              </div>
-              <div class="col-6">
-                <label class="form-label ft-label">Longitude</label>
-                <input type="number" step="0.000001"
-                       name="location_setting[gps][longitude]"
-                       value="<%= @gps_setting.longitude %>"
-                       class="form-control ft-input" placeholder="75.8577">
-              </div>
-            </div>
-            <div>
-              <label class="form-label ft-label">Radius (metres)</label>
-              <input type="number"
-                     name="location_setting[gps][radius_meters]"
-                     value="<%= @gps_setting.radius_meters.presence || 100 %>"
-                     class="form-control ft-input" min="10" max="5000">
+          <%# Radius %>
+          <div class="mb-3">
+            <label class="form-label ft-label">
+              Allowed Radius (metres)
+              <span class="text-muted fw-normal small" id="radius-display">
+                — <%= @setting.radius_meters || 100 %>m
+              </span>
+            </label>
+            <input type="range" name="location_setting[radius_meters]"
+                   id="radius-slider"
+                   value="<%= @setting.radius_meters || 100 %>"
+                   min="25" max="2000" step="25"
+                   class="form-range">
+            <div class="d-flex justify-content-between ft-text-xs text-muted">
+              <span>25 m</span><span>500 m</span><span>1 km</span><span>2 km</span>
             </div>
           </div>
+
+          <%# Use my current location button %>
+          <div class="alert alert-light border d-flex align-items-center gap-3">
+            <i class="bi bi-crosshair2 fs-4 text-primary"></i>
+            <div class="flex-fill">
+              <div class="fw-semibold small">Set to My Current Location</div>
+              <div class="ft-text-xs text-muted">Click to auto-fill lat/lng with your browser location.</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillMyLocation()">
+              <i class="bi bi-geo me-1"></i>Use My Location
+            </button>
+          </div>
+
         </div>
       </div>
 
-      <div class="mt-4">
-        <button type="submit" class="btn cc-btn-primary px-5">
-          <i class="bi bi-save me-2"></i>Save Settings
-        </button>
-      </div>
+      <button type="submit" class="btn ft-btn-primary px-5">
+        <i class="bi bi-save me-2"></i>Save Settings
+      </button>
     <% end %>
   </div>
 </div>
+
+<script>
+// Update radius display label live
+const slider  = document.getElementById('radius-slider');
+const display = document.getElementById('radius-display');
+slider.addEventListener('input', () => {
+  display.textContent = `— ${slider.value}m`;
+});
+
+// Fill lat/lng fields from browser GPS
+function fillMyLocation() {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.querySelector('input[name="location_setting[latitude]"]').value  =
+        pos.coords.latitude.toFixed(6);
+      document.querySelector('input[name="location_setting[longitude]"]').value =
+        pos.coords.longitude.toFixed(6);
+    },
+    err => alert('Could not get location: ' + err.message),
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+</script>

@@ -11,27 +11,54 @@ class Admin::MealSettingsController < ApplicationController
   def update
     errors = []
 
-    MealSetting::MEAL_TYPES.each do |mt|
-      next unless params[:meal_settings]&.key?(mt)
+    ActiveRecord::Base.transaction do
+      (params[:meal_settings] || {}).each do |mt, attrs|
+        next unless MealSetting::MEAL_TYPES.include?(mt)
 
-      setting = MealSetting.find_or_initialize_by(meal_type: mt)
-      attrs   = params[:meal_settings][mt].permit(:start_time, :end_time)
+        setting = MealSetting.find_or_initialize_for(mt)
 
-      unless setting.update(attrs)
-        errors << "#{mt.humanize}: #{setting.errors.full_messages.join(', ')}"
+        # ✅ SAFE TIME PARSING (IMPORTANT)
+        start_time = parse_time(attrs[:start_time])
+        end_time   = parse_time(attrs[:end_time])
+
+        setting.start_time = start_time if start_time
+        setting.end_time   = end_time   if end_time
+        setting.price      = attrs[:price].to_f
+
+        unless setting.save
+          errors << "#{mt.humanize}: #{setting.errors.full_messages.join(', ')}"
+        end
       end
+
+      # ❗ Rollback manually if any errors
+      raise ActiveRecord::Rollback if errors.any?
     end
 
     if errors.empty?
-      redirect_to admin_meal_settings_path, notice: "Meal timings updated."
+      redirect_to admin_meal_settings_path, notice: "Meal settings updated successfully ✅"
     else
-      redirect_to admin_meal_settings_path, alert: errors.join("; ")
+      @settings = MealSetting::MEAL_TYPES.map do |mt|
+        MealSetting.find_or_initialize_for(mt)
+      end
+
+      flash.now[:alert] = errors.join("; ")
+      render :index, status: :unprocessable_entity
     end
   end
 
   private
 
+  # ✅ CENTRALIZED TIME PARSER
+  def parse_time(value)
+    return nil if value.blank?
+
+    # Ensures correct timezone + avoids invalid formats
+    Time.zone.parse(value)
+  rescue ArgumentError
+    nil
+  end
+
   def ensure_admin!
-    redirect_to root_path unless current_user.admin?
+    redirect_to root_path, alert: "Access denied." unless current_user.admin?
   end
 end

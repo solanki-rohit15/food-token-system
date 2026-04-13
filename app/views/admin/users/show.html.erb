@@ -54,8 +54,8 @@
                 <% @recent_tokens.each do |token| %>
                   <tr>
                     <td class="small text-muted"><%= token.order.date.strftime("%d %b %Y") %></td>
-                    <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></td>
-                    <td><span class="badge bg-light border text-dark font-monospace">#<%= token.id.to_s.rjust(6,"0") %></span></td>
+                    <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+                    <td><span class="badge bg-light border text-dark font-monospace"><%= token.token_number %></span></td>
                     <td><%= token_status_badge(token) %></td>
                   </tr>
                 <% end %>

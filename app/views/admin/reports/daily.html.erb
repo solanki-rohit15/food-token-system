@@ -35,7 +35,7 @@
                 </div>
               </td>
               <td class="small text-muted"><%= order.user.email %></td>
-              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></td>
+              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
               <td><span class="badge bg-light border text-dark font-monospace">#<%= order.token&.id.to_s.rjust(6,"0") %></span></td>
               <td><%= token_status_badge(order.token) %></td>
               <td class="small text-muted"><%= order.created_at.strftime("%I:%M %p") %></td>

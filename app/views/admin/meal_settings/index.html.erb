@@ -1,51 +1,77 @@
-<% content_for :title, "Meal Timings — Admin" %>
-<div class="ft-page pb-4">
-  <div class="ft-page-header px-3 py-3">
-    <h2 class="ft-page-title mb-0">Meal Time Slots</h2>
-    <p class="text-muted small mb-0">Configure when each meal is available for selection</p>
-  </div>
-  <div class="px-3">
-    <div class="ft-info-banner mb-3">
-      <i class="bi bi-info-circle-fill text-primary me-2"></i>
-      <span class="small">Changes take effect immediately. Employees outside the time window cannot select that meal.</span>
-    </div>
+<% content_for :title, "Meal Timings & Prices — Admin" %>
 
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3">
+    <h2 class="ft-page-title mb-1">Meal Timings & Prices</h2>
+    <p class="text-muted small">Set availability windows and per-category pricing</p>
+  </div>
+
+  <div class="px-3">
     <%= form_tag admin_meal_settings_path, method: :patch do %>
-      <% @settings.each do |setting| %>
-        <% info = FoodItem::CATEGORIES[setting.meal_type.to_s] || {} %>
-        <div class="ft-vendor-card mb-3">
-          <div class="d-flex align-items-center gap-2 mb-3">
-            <span style="font-size:24px;"><%= info[:icon] %></span>
-            <h6 class="mb-0 fw-semibold"><%= info[:label] || setting.label %></h6>
-          </div>
-          <div class="row g-3">
-            <div class="col-6">
-              <label class="form-label ft-label">Start Time</label>
-              <input type="time" name="meal_settings[<%= setting.meal_type %>][start_time]"
-                     value="<%= setting.start_time %>" class="form-control ft-input">
-            </div>
-            <div class="col-6">
-              <label class="form-label ft-label">End Time</label>
-              <input type="time" name="meal_settings[<%= setting.meal_type %>][end_time]"
-                     value="<%= setting.end_time %>" class="form-control ft-input">
-            </div>
-          </div>
-          <div class="mt-2">
-            <% if setting.available_now? %>
-              <span class="badge bg-success-subtle text-success border border-success-subtle">
-                <i class="bi bi-circle-fill me-1" style="font-size:6px;"></i>Currently Available
-              </span>
-            <% else %>
-              <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                Currently Closed
-              </span>
-            <% end %>
+
+      <div class="card ft-card mb-3">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table ft-table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Category</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Price (₹)</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <% @settings.each do |setting| %>
+                  <% info = FoodItem::CATEGORIES[setting.meal_type] %>
+
+                  <tr>
+                    <td>
+                      <span class="me-1"><%= info&.dig(:icon) %></span>
+                      <strong><%= info&.dig(:label) || setting.meal_type.humanize %></strong>
+                    </td>
+
+                    <!-- ✅ START TIME -->
+                    <td>
+                      <input type="time"
+                             name="meal_settings[<%= setting.meal_type %>][start_time]"
+                             value="<%= setting.start_time&.strftime('%H:%M') %>"
+                             class="form-control form-control-sm"
+                             style="width:130px">
+                    </td>
+
+                    <!-- ✅ END TIME -->
+                    <td>
+                      <input type="time"
+                             name="meal_settings[<%= setting.meal_type %>][end_time]"
+                             value="<%= setting.end_time&.strftime('%H:%M') %>"
+                             class="form-control form-control-sm"
+                             style="width:130px">
+                    </td>
+
+                    <!-- ✅ PRICE -->
+                    <td>
+                      <div class="input-group" style="width:130px">
+                        <span class="input-group-text">₹</span>
+                        <input type="number"
+                               name="meal_settings[<%= setting.meal_type %>][price]"
+                               value="<%= setting.price.to_f %>"
+                               min="0" step="0.01"
+                               class="form-control form-control-sm">
+                      </div>
+                    </td>
+                  </tr>
+
+                <% end %>
+              </tbody>
+            </table>
           </div>
         </div>
-      <% end %>
-      <button type="submit" class="btn ft-btn-primary w-100">
-        <i class="bi bi-save me-2"></i>Save Time Slots
-      </button>
+      </div>
+
+      <%= submit_tag "Save Settings", class: "btn btn-primary px-4" %>
+
     <% end %>
   </div>
 </div>

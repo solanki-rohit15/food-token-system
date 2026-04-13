@@ -2,26 +2,27 @@
 
 <div class="ft-page" id="scanner-page">
   <div class="ft-scanner-full">
+
     <%# Camera view %>
     <div class="ft-camera-view" id="camera-view">
       <video id="qr-video" autoplay muted playsinline class="ft-camera-video"></video>
-      <canvas id="qr-canvas" style="display:none;"></canvas>
+      <canvas id="qr-canvas" class="d-none"></canvas>
       <div class="ft-scan-overlay">
         <div class="ft-scan-frame">
           <div class="ft-corner tl"></div><div class="ft-corner tr"></div>
           <div class="ft-corner bl"></div><div class="ft-corner br"></div>
           <div class="ft-scan-line" id="scan-line"></div>
         </div>
-        <p class="ft-scan-hint text-white mt-3">Point camera at employee's QR code</p>
+        <p class="ft-scan-hint text-white mt-3">Scan employee's token or meal QR code</p>
       </div>
     </div>
 
-    <%# Manual entry fallback %>
+    <%# Manual entry %>
     <div class="ft-scanner-manual px-3 py-3">
-      <div class="ft-divider-text mb-2"><span>or enter token ID manually</span></div>
+      <div class="ft-divider-text mb-2"><span>or enter code manually</span></div>
       <div class="input-group">
         <input type="text" id="manual-qr" class="form-control ft-input"
-               placeholder="Paste QR code data here..." autocomplete="off">
+               placeholder="Token number (FT-...) or item code (FI-...)" autocomplete="off">
         <button class="btn ft-btn-primary" onclick="verifyManual()">
           <i class="bi bi-check-circle me-1"></i>Verify
         </button>
@@ -29,48 +30,58 @@
     </div>
 
     <%# Result panel %>
-    <div id="scan-result" class="ft-scan-result px-3 pb-4" style="display:none;">
-      <div id="result-valid" style="display:none;">
+    <div id="scan-result" class="ft-scan-result px-3 pb-4 d-none">
+
+      <%# Valid result %>
+      <div id="result-valid" class="d-none">
         <div class="ft-result-header ft-result-valid p-3 rounded-top">
-          <div class="ft-result-status-icon fs-1">✅</div>
+          <div class="ft-result-status-icon">✅</div>
           <h3 class="text-white mb-0">Valid Token</h3>
         </div>
         <div class="ft-vendor-card mt-0 rounded-top-0">
-          <div class="ft-section-label mb-2">Employee</div>
+          <p class="ft-section-label mb-2">Employee</p>
           <div class="d-flex align-items-center gap-3 mb-3">
-            <div class="ft-avatar-lg bg-primary-subtle text-primary fw-bold" id="emp-initials">—</div>
+            <div class="ft-avatar-lg" id="emp-initials">—</div>
             <div>
               <div class="fw-semibold" id="emp-name">—</div>
               <div class="text-muted small" id="emp-email">—</div>
               <div class="text-muted small" id="emp-dept">—</div>
             </div>
           </div>
-          <div class="ft-section-label mb-2">Selected Items</div>
-          <div class="d-flex flex-wrap gap-2 mb-3" id="token-items">—</div>
-          <div class="d-flex justify-content-between text-muted small py-2 border-top">
-            <span>Token ID</span><span id="token-id-disp">—</span>
+
+          <div id="scanned-item-info" class="d-none">
+            <p class="ft-section-label mb-1">Scanned Item</p>
+            <div class="badge bg-primary mb-3" id="scanned-item-badge">—</div>
           </div>
-          <div class="d-flex justify-content-between text-muted small py-1">
+
+          <p class="ft-section-label mb-2">All Selected Items</p>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="token-items">—</div>
+          <div class="d-flex justify-content-between ft-meta-row">
+            <span>Token</span><span id="token-id-disp" class="font-monospace">—</span>
+          </div>
+          <div class="d-flex justify-content-between ft-meta-row">
             <span>Expires</span><span id="token-expiry">—</span>
           </div>
         </div>
 
+        <%# Vendor sends request — NO direct redeem button %>
         <div class="px-3 mt-3">
-          <button class="btn ft-btn-primary w-100 mb-2" onclick="sendRedemptionRequest()" id="redeem-btn">
-            <i class="bi bi-send me-2"></i>Send Redemption Request
+          <button class="btn ft-btn-primary w-100 mb-2" onclick="sendRedemptionRequest()" id="send-req-btn">
+            <i class="bi bi-send me-2"></i>Send Redemption Request to Employee
           </button>
-          <button class="btn btn-success w-100 mb-2" onclick="redeemDirectly()" id="direct-redeem-btn">
-            <i class="bi bi-check-circle-fill me-2"></i>Redeem Directly
-          </button>
-          <button class="btn ft-btn-outline w-100" onclick="resetScanner()">
+          <p class="text-muted small text-center mt-1">
+            The employee must approve before the token is redeemed.
+          </p>
+          <button class="btn ft-btn-outline w-100 mt-2" onclick="resetScanner()">
             <i class="bi bi-arrow-left me-2"></i>Scan Another
           </button>
         </div>
       </div>
 
-      <div id="result-invalid" style="display:none;">
+      <%# Invalid result %>
+      <div id="result-invalid" class="d-none">
         <div class="ft-result-header ft-result-invalid p-3 rounded">
-          <div class="fs-1">❌</div>
+          <div class="ft-result-status-icon">❌</div>
           <h3 class="text-white mb-0" id="invalid-title">Invalid Token</h3>
         </div>
         <div class="ft-vendor-card mt-3">
@@ -80,15 +91,16 @@
           <i class="bi bi-arrow-left me-2"></i>Try Again
         </button>
       </div>
+
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
-const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const csrfToken    = document.querySelector('meta[name="csrf-token"]').content;
 let currentTokenId = null;
-let scanning = true;
+let scanning       = true;
 
 const video  = document.getElementById('qr-video');
 const canvas = document.getElementById('qr-canvas');
@@ -96,7 +108,7 @@ const ctx    = canvas.getContext('2d');
 
 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
   .then(stream => { video.srcObject = stream; video.play(); requestAnimationFrame(tick); })
-  .catch(() => { /* camera not available — user will use manual entry */ });
+  .catch(() => { /* no camera — use manual entry */ });
 
 function tick() {
   if (!scanning) return;
@@ -118,31 +130,45 @@ function verifyManual() {
 
 function verifyCode(data) {
   fetch('<%= vendor_verify_scan_path %>', {
-    method: 'POST',
+    method:  'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    body: JSON.stringify({ qr_data: data })
+    body:    JSON.stringify({ qr_data: data })
   })
   .then(r => r.json())
   .then(result => {
-    document.getElementById('scan-result').style.display  = 'block';
-    document.getElementById('camera-view').style.display  = 'none';
+    document.getElementById('scan-result').classList.remove('d-none');
+    document.getElementById('camera-view').classList.add('d-none');
 
     if (result.valid) {
       currentTokenId = result.token_id;
-      document.getElementById('result-valid').style.display   = 'block';
-      document.getElementById('result-invalid').style.display = 'none';
-      document.getElementById('emp-initials').textContent     = result.employee.name.split(' ').map(n=>n[0]).join('').toUpperCase();
-      document.getElementById('emp-name').textContent         = result.employee.name;
-      document.getElementById('emp-email').textContent        = result.employee.email;
-      document.getElementById('emp-dept').textContent         = result.employee.department || '';
-      document.getElementById('token-id-disp').textContent    = '#' + String(result.token_id).padStart(6,'0');
-      document.getElementById('token-expiry').textContent     = result.expires_at;
+
+      document.getElementById('result-valid').classList.remove('d-none');
+      document.getElementById('result-invalid').classList.add('d-none');
+      document.getElementById('emp-initials').textContent  = result.employee.initials || result.employee.name.split(' ').map(n=>n[0]).join('').toUpperCase();
+      document.getElementById('emp-name').textContent      = result.employee.name;
+      document.getElementById('emp-email').textContent     = result.employee.email;
+      document.getElementById('emp-dept').textContent      = result.employee.department || '';
+      document.getElementById('token-id-disp').textContent = result.token_number;
+      document.getElementById('token-expiry').textContent  = result.expires_at;
+
+      // Show scanned item if it was a per-item QR
+      const itemInfo = document.getElementById('scanned-item-info');
+      if (result.scanned_item) {
+        itemInfo.classList.remove('d-none');
+        document.getElementById('scanned-item-badge').textContent = result.scanned_item.category;
+      } else {
+        itemInfo.classList.add('d-none');
+      }
+
       const itemsEl = document.getElementById('token-items');
-      itemsEl.innerHTML = result.items.map(i => `<span class="badge bg-light border text-dark">${i.icon} ${i.name}</span>`).join('');
+      itemsEl.innerHTML = result.items.map(i =>
+        `<span class="badge bg-light border text-dark">${i.icon} ${i.label}</span>`
+      ).join('');
+
     } else {
-      document.getElementById('result-invalid').style.display = 'block';
-      document.getElementById('result-valid').style.display   = 'none';
-      document.getElementById('invalid-message').textContent  = result.message;
+      document.getElementById('result-invalid').classList.remove('d-none');
+      document.getElementById('result-valid').classList.add('d-none');
+      document.getElementById('invalid-message').textContent = result.message;
     }
   })
   .catch(() => { alert('Error verifying token. Please try again.'); scanning = true; });
@@ -150,46 +176,38 @@ function verifyCode(data) {
 
 function sendRedemptionRequest() {
   if (!currentTokenId) return;
-  const btn = document.getElementById('redeem-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="bi bi-hourglass me-2"></i>Waiting for employee...';
+  const btn = document.getElementById('send-req-btn');
+  btn.disabled   = true;
+  btn.innerHTML  = '<span class="spinner-border spinner-border-sm me-2"></span>Sending request…';
 
   fetch(`/vendor/tokens/${currentTokenId}/send_redemption_request`, {
-    method: 'POST',
+    method:  'POST',
     headers: { 'X-CSRF-Token': csrfToken, 'Content-Type': 'application/json' }
   })
   .then(r => r.json())
   .then(data => {
     if (data.success) {
-      btn.innerHTML = '<i class="bi bi-check-circle text-success me-2"></i>Request Sent!';
+      btn.innerHTML = '<i class="bi bi-check-circle text-white me-2"></i>Request Sent — Waiting for Employee';
+      btn.classList.replace('ft-btn-primary', 'btn-success');
+    } else {
+      btn.disabled  = false;
+      btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Redemption Request to Employee';
+      alert(data.message);
     }
-  });
-}
-
-function redeemDirectly() {
-  if (!currentTokenId) return;
-  if (!confirm('Redeem this token directly?')) return;
-  const btn = document.getElementById('direct-redeem-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Redeeming...';
-
-  fetch(`/vendor/tokens/${currentTokenId}/redeem`, {
-    method: 'POST',
-    headers: { 'X-CSRF-Token': csrfToken }
   })
-  .then(r => {
-    if (r.redirected) { window.location.href = r.url; }
-    else { resetScanner(); }
-  });
+  .catch(() => { btn.disabled = false; alert('Network error. Please try again.'); });
 }
 
 function resetScanner() {
-  currentTokenId = null; scanning = true;
-  document.getElementById('scan-result').style.display  = 'none';
-  document.getElementById('camera-view').style.display  = 'block';
-  document.getElementById('result-valid').style.display = 'none';
-  document.getElementById('result-invalid').style.display = 'none';
+  currentTokenId = null;
+  scanning       = true;
+  document.getElementById('scan-result').classList.add('d-none');
+  document.getElementById('camera-view').classList.remove('d-none');
+  document.getElementById('result-valid').classList.add('d-none');
+  document.getElementById('result-invalid').classList.add('d-none');
   document.getElementById('manual-qr').value = '';
+  const btn = document.getElementById('send-req-btn');
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Redemption Request to Employee'; btn.classList.replace('btn-success','ft-btn-primary'); }
   requestAnimationFrame(tick);
 }
 </script>

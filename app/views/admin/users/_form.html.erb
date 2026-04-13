@@ -20,20 +20,26 @@
       </div>
       <div class="mb-3">
         <label class="form-label ft-label">Phone</label>
-        <%= f.telephone_field :phone, class: "form-control ft-input", placeholder: "+91..." %>
+        <%= f.telephone_field :phone, class: "form-control ft-input", placeholder: "+91…" %>
       </div>
       <div class="mb-3">
         <label class="form-label ft-label">Role *</label>
         <%= f.select :role, [["Employee","employee"],["Vendor","vendor"],["Admin","admin"]],
               {}, class: "form-select ft-input" %>
       </div>
-      <div class="mb-3">
-        <label class="form-label ft-label">Password <%= "(leave blank to keep current)" unless user.new_record? %></label>
-        <%= f.password_field :password, class: "form-control ft-input",
-              placeholder: user.new_record? ? "Min. 6 characters" : "Leave blank to keep",
-              autocomplete: "new-password" %>
-      </div>
+
       <% unless user.new_record? %>
+        <%# Only show password fields when editing — leave blank to keep existing %>
+        <div class="mb-3">
+          <label class="form-label ft-label">New Password <span class="text-muted">(leave blank to keep current)</span></label>
+          <%= f.password_field :password, class: "form-control ft-input",
+                placeholder: "Min. 8 characters", autocomplete: "new-password" %>
+        </div>
+        <div class="mb-3">
+          <label class="form-label ft-label">Confirm New Password</label>
+          <%= f.password_field :password_confirmation, class: "form-control ft-input",
+                autocomplete: "new-password" %>
+        </div>
         <div class="mb-3">
           <div class="form-check form-switch">
             <%= f.hidden_field :active, value: "0" %>
@@ -42,11 +48,20 @@
           </div>
         </div>
       <% end %>
+
+      <% if user.new_record? %>
+        <div class="alert alert-info py-2 small">
+          <i class="bi bi-info-circle me-1"></i>
+          A secure temporary password will be generated and emailed to the user.
+          They will be required to change it on first login.
+        </div>
+      <% end %>
     </div>
   </div>
 
   <div class="d-flex gap-2">
-    <%= f.submit user.new_record? ? "Create User" : "Save Changes", class: "btn ft-btn-primary px-4" %>
+    <%= f.submit user.new_record? ? "Create User & Send Invite" : "Save Changes",
+          class: "btn ft-btn-primary px-4" %>
     <%= link_to "Cancel", admin_users_path, class: "btn btn-outline-secondary" %>
   </div>
 <% end %>

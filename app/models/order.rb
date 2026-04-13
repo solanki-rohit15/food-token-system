@@ -1,8 +1,8 @@
 class Order < ApplicationRecord
   belongs_to :user
   has_many   :order_items, dependent: :destroy
-  has_many   :food_items, through: :order_items
-  has_one    :token, dependent: :destroy
+  has_many   :food_items,  through: :order_items
+  has_one    :token,       dependent: :destroy
 
   scope :today,      -> { where(date: Date.current) }
   scope :for_date,   ->(date) { where(date: date) }
@@ -15,19 +15,13 @@ class Order < ApplicationRecord
 
   def generate_token!
     return token if token.present?
-    create_token!(
-      qr_code:    SecureRandom.urlsafe_base64(32),
-      expires_at: token_expiry_time,
-      status:     :active
-    )
+    create_token!(expires_at: token_expiry_time, status: :active)
   end
 
-  def total_items
-    order_items.count
-  end
+  def total_items = order_items.count
 
   def summary
-    food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ")
+    food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ")
   end
 
   private
@@ -37,7 +31,6 @@ class Order < ApplicationRecord
   end
 
   def token_expiry_time
-    today = Date.current
-    Time.zone.parse("#{today} #{Token::TOKEN_VALID_UNTIL}")
+    Time.zone.parse("#{Date.current} #{Token::TOKEN_VALID_UNTIL}")
   end
 end

@@ -1,14 +1,16 @@
+require "csv"
+
 class Admin::ReportsController < ApplicationController
   before_action :authenticate_user!
   before_action :ensure_admin!
 
   def index
-    @date         = parse_date(params[:date]) || Date.current
-    @tokens       = Token.for_date(@date).includes(order: [:user, :food_items]).order(created_at: :desc)
-    @total        = @tokens.count
-    @redeemed     = @tokens.redeemed.count
-    @active       = @tokens.active.count
-    @expired      = @tokens.expired.count
+    @date     = parse_date(params[:date]) || Date.current
+    @tokens   = Token.for_date(@date).includes(order: [:user, :food_items]).order(created_at: :desc)
+    @total    = @tokens.count
+    @redeemed = @tokens.redeemed.count
+    @active   = @tokens.active.count
+    @expired  = @tokens.expired.count
   end
 
   def daily
@@ -17,11 +19,11 @@ class Admin::ReportsController < ApplicationController
   end
 
   def monthly
-    @month       = parse_date(params[:month]) || Date.current.beginning_of_month
-    @end_month   = @month.end_of_month
-    @orders      = Order.where(date: @month..@end_month)
-                        .includes(:user, :food_items, :token)
-                        .order(date: :desc, created_at: :desc)
+    @month     = parse_date(params[:month]) || Date.current.beginning_of_month
+    @end_month = @month.end_of_month
+    @orders    = Order.where(date: @month..@end_month)
+                      .includes(:user, :food_items, :token)
+                      .order(date: :desc, created_at: :desc)
 
     @daily_stats = (@month..[@end_month, Date.current].min).map do |date|
       day_tokens = Token.for_date(date)
@@ -35,29 +37,26 @@ class Admin::ReportsController < ApplicationController
   end
 
   def employee_wise
-    @date      = parse_date(params[:date]) || Date.current
-    @employees = User.employees.active
-                     .includes(orders: [:food_items, :token])
-                     .order(:name)
-    @date_orders = Order.for_date(@date)
-                        .includes(:user, :food_items, :token)
-                        .order(created_at: :desc)
+    @date        = parse_date(params[:date]) || Date.current
+    @employees   = User.employees.active.includes(orders: [:food_items, :token]).order(:name)
+    @date_orders = Order.for_date(@date).includes(:user, :food_items, :token).order(created_at: :desc)
   end
 
   def export
     @date   = parse_date(params[:date]) || Date.current
     @tokens = Token.for_date(@date).includes(order: [:user, :food_items])
 
-    csv = CSV.generate(headers: true) do |csv|
-      csv << ["Date", "Employee", "Email", "Department", "Items", "Token ID", "Status", "Redeemed At"]
+    csv = CSV.generate(headers: true) do |row|
+      row << ["Date", "Employee", "Email", "Department",
+              "Categories", "Token Number", "Status", "Redeemed At"]
       @tokens.each do |t|
-        csv << [
+        row << [
           t.order.date,
           t.user.name,
           t.user.email,
           t.user.employee_profile&.department,
-          t.food_items.map(&:name).join(", "),
-          t.id,
+          t.food_items.map(&:category_label).join(", "),
+          t.token_number,
           t.status,
           t.redeemed_at&.strftime("%H:%M")
         ]

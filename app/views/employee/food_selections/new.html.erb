@@ -18,8 +18,15 @@
   <%= form_tag employee_food_selections_path, method: :post, id: "meal-form" do %>
 
     <% FoodItem::CATEGORIES.each do |cat, info| %>
-      <% setting = @meal_settings[cat.to_s] %>
-      <% available = setting ? setting.available_now? : Time.current.hour < info[:cutoff_hour] %>
+      <% food_item = @active_categories[cat.to_s] %>
+      <% next unless food_item %>
+
+      <% setting   = @meal_settings[cat.to_s] %>
+
+      <!-- ✅ USE SAME LOGIC AS BACKEND -->
+      <% available = food_item.available_now? %>
+
+      <% price     = food_item.price.to_f %>
 
       <div class="ft-section px-3 mt-3">
         <label class="ft-meal-select-item <%= available ? '' : 'disabled' %>">
@@ -29,34 +36,36 @@
                    name="categories[]"
                    value="<%= cat %>"
                    class="ft-meal-checkbox"
-                   <%= available ? '' : 'disabled' %>
+                   <%= 'disabled' unless available %>
                    onchange="updateSelection()">
             <div class="ft-meal-check-ui"></div>
           </div>
 
-          <div class="ft-meal-select-emoji">
-            <%= info[:icon] %>
-          </div>
+          <div class="ft-meal-select-emoji"><%= info[:icon] %></div>
 
-          <div class="ft-meal-select-info">
-            <div class="ft-meal-select-name">
-              <%= info[:label] %>
-            </div>
+          <div class="ft-meal-select-info flex-fill">
+            <div class="ft-meal-select-name"><%= info[:label] %></div>
 
             <% if available %>
-              <span class="badge bg-success-subtle text-success small">
-                Available
-              </span>
+              <span class="badge bg-success-subtle text-success small">Available</span>
             <% else %>
-              <span class="badge bg-danger-subtle text-danger small">
-                Closed
-              </span>
+              <span class="badge bg-danger-subtle text-danger small">Closed</span>
+
+              <!-- ✅ SHOW TIME INFO -->
+              <% if setting&.start_time && setting&.end_time %>
+                <div class="text-muted small">
+                  <%= setting.formatted_time_range %>
+                </div>
+              <% end %>
             <% end %>
           </div>
 
+          <% if price > 0 %>
+            <div class="text-muted small fw-semibold"><%= currency(price) %></div>
+          <% end %>
+
         </label>
       </div>
-
     <% end %>
 
     <div class="ft-sticky-bottom px-3 py-3">
@@ -75,22 +84,24 @@
 <script>
 function updateSelection() {
   const checked = document.querySelectorAll('.ft-meal-checkbox:checked');
-  const btn = document.getElementById('generate-btn');
+  const btn     = document.getElementById('generate-btn');
   const summary = document.getElementById('selected-count');
 
   if (checked.length === 0) {
-    btn.disabled = true;
+    btn.disabled        = true;
     summary.textContent = 'No meals selected';
-    summary.className = 'text-muted small';
+    summary.className   = 'text-muted small';
   } else {
     btn.disabled = false;
 
     const names = Array.from(checked).map(cb =>
-      cb.closest('.ft-meal-select-item').querySelector('.ft-meal-select-name').textContent
+      cb.closest('.ft-meal-select-item')
+        .querySelector('.ft-meal-select-name')
+        .textContent.trim()
     );
 
     summary.textContent = `Selected: ${names.join(', ')}`;
-    summary.className = 'text-success small fw-semibold';
+    summary.className   = 'text-success small fw-semibold';
   }
 }
 </script>

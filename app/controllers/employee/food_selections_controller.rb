@@ -8,9 +8,9 @@ class Employee::FoodSelectionsController < ApplicationController
       return
     end
 
-    @food_items    = FoodItem.active.ordered
-    @food_by_cat   = @food_items.group_by(&:category)
     @meal_settings = MealSetting.all.index_by(&:meal_type)
+    # Active food items keyed by category
+    @active_categories = FoodItem.active.ordered.index_by(&:category)
   end
 
   def create
@@ -19,10 +19,11 @@ class Employee::FoodSelectionsController < ApplicationController
       return
     end
 
-    food_item_ids = Array(params[:food_item_ids]).map(&:to_i).uniq
+    selected_categories = Array(params[:categories]).map(&:to_s).uniq
+                                                    .select { |c| FoodItem::CATEGORIES.key?(c) }
 
-    if food_item_ids.blank?
-      redirect_to new_employee_food_selection_path, alert: "Please select at least one item."
+    if selected_categories.blank?
+      redirect_to new_employee_food_selection_path, alert: "Please select at least one meal."
       return
     end
 
@@ -31,15 +32,13 @@ class Employee::FoodSelectionsController < ApplicationController
     ActiveRecord::Base.transaction do
       order = current_user.orders.create!(date: Date.current)
 
-      valid_items = FoodItem.active.where(id: food_item_ids).select(&:available_now?)
+      valid_items = FoodItem.active.where(category: selected_categories).select(&:available_now?)
 
       if valid_items.empty?
-        raise ActiveRecord::Rollback, "No valid/available items selected"
+        raise ActiveRecord::Rollback, "No valid/available categories selected"
       end
 
-      valid_items.each do |item|
-        order.order_items.create!(food_item: item)
-      end
+      valid_items.each { |item| order.order_items.create!(food_item: item) }
 
       token = order.generate_token!
     end
@@ -48,7 +47,7 @@ class Employee::FoodSelectionsController < ApplicationController
       redirect_to employee_token_path(token), notice: "Your food token has been generated! 🎉"
     else
       redirect_to new_employee_food_selection_path,
-        alert: "Could not place order. Please select available items."
+                  alert: "Could not place order. Please select available meals."
     end
   rescue ActiveRecord::RecordInvalid => e
     redirect_to new_employee_food_selection_path, alert: e.message

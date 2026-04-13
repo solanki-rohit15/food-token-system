@@ -14,24 +14,21 @@
     <% end %>
   </div>
 
-  <%# Filters %>
   <div class="px-3 mb-3">
     <%= form_tag vendor_tokens_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
       <input type="date" name="date" value="<%= @date %>"
              max="<%= Date.current %>"
              class="form-control form-control-sm ft-input" style="width:160px">
-
       <select name="status" class="form-select form-select-sm ft-input" style="width:140px">
         <option value="">All Status</option>
         <option value="active"   <%= "selected" if params[:status]=="active"   %>>Active</option>
         <option value="redeemed" <%= "selected" if params[:status]=="redeemed" %>>Redeemed</option>
         <option value="expired"  <%= "selected" if params[:status]=="expired"  %>>Expired</option>
       </select>
-
       <input type="text" name="search" value="<%= params[:search] %>"
-             class="form-control form-control-sm ft-input" placeholder="Search employee..."
-             style="width:180px">
-
+             class="form-control form-control-sm ft-input"
+             placeholder="Name, email or token no."
+             style="width:200px">
       <button type="submit" class="btn btn-sm ft-btn-primary">
         <i class="bi bi-search me-1"></i>Filter
       </button>
@@ -39,15 +36,14 @@
     <% end %>
   </div>
 
-  <%# Table %>
   <div class="px-3">
     <div class="table-responsive">
       <table class="table ft-table align-middle">
         <thead class="table-light">
           <tr>
             <th>Employee</th>
-            <th>Items</th>
-            <th>Token</th>
+            <th>Categories</th>
+            <th>Token No.</th>
             <th>Time</th>
             <th>Status</th>
             <th>Action</th>
@@ -65,10 +61,10 @@
                   </div>
                 </div>
               </td>
-              <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></td>
+              <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
               <td>
                 <span class="badge bg-light border text-dark font-monospace">
-                  #<%= token.id.to_s.rjust(6,"0") %>
+                  <%= token.token_number %>
                 </span>
               </td>
               <td class="small text-muted"><%= token.created_at.strftime("%I:%M %p") %></td>

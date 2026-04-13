@@ -12,10 +12,10 @@
     <div class="flex-fill">
       <div class="d-flex justify-content-between align-items-start">
         <div>
-          <div class="fw-semibold small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></div>
-          <div class="text-muted" style="font-size:12px;">
+          <div class="fw-semibold small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></div>
+          <div class="text-muted ft-text-xs">
             <%= token.order.date.strftime("%d %b %Y") %> &bull;
-            Token #<%= token.id.to_s.rjust(6,"0") %>
+            Token <%= token.token_number %>
           </div>
         </div>
         <%= token_status_badge(token) %>

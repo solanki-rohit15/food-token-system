@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_07_180502) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_14_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -37,9 +37,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_180502) do
   create_table "location_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "enabled", default: false
-    t.string "ip_range"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
+    t.string "name", default: "Office", null: false
     t.integer "radius_meters", default: 100
     t.integer "setting_type", null: false
     t.datetime "updated_at", null: false
@@ -48,9 +48,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_180502) do
 
   create_table "meal_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "end_time", null: false
+    t.time "end_time", null: false
     t.string "meal_type", null: false
-    t.string "start_time", null: false
+    t.decimal "price", precision: 10, scale: 2, default: "0.0", null: false
+    t.time "start_time", null: false
     t.datetime "updated_at", null: false
     t.index ["meal_type"], name: "index_meal_settings_on_meal_type", unique: true
   end
@@ -58,9 +59,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_180502) do
   create_table "order_items", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "food_item_id", null: false
+    t.string "item_code"
     t.bigint "order_id", null: false
+    t.datetime "redeemed_at"
+    t.bigint "redeemed_by_id"
     t.datetime "updated_at", null: false
     t.index ["food_item_id"], name: "index_order_items_on_food_item_id"
+    t.index ["item_code"], name: "index_order_items_on_item_code", unique: true
     t.index ["order_id", "food_item_id"], name: "index_order_items_on_order_id_and_food_item_id", unique: true
     t.index ["order_id"], name: "index_order_items_on_order_id"
   end
@@ -87,19 +92,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_180502) do
     t.index ["user_id"], name: "index_otp_verifications_on_user_id"
   end
 
+  create_table "redemption_requests", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "order_item_id"
+    t.datetime "responded_at"
+    t.integer "status", default: 0, null: false
+    t.bigint "token_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "vendor_id", null: false
+    t.index ["order_item_id"], name: "index_redemption_requests_on_order_item_id"
+    t.index ["token_id", "status"], name: "index_redemption_requests_on_token_id_and_status"
+    t.index ["token_id"], name: "index_redemption_requests_on_token_id"
+    t.index ["vendor_id"], name: "index_redemption_requests_on_vendor_id"
+  end
+
   create_table "tokens", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
     t.bigint "order_id", null: false
-    t.string "qr_code", null: false
     t.datetime "redeemed_at"
     t.integer "redeemed_by"
     t.integer "status", default: 0, null: false
+    t.string "token_number", null: false
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_tokens_on_expires_at"
     t.index ["order_id"], name: "index_tokens_on_order_id"
-    t.index ["qr_code"], name: "index_tokens_on_qr_code", unique: true
     t.index ["status"], name: "index_tokens_on_status"
+    t.index ["token_number"], name: "index_tokens_on_token_number", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -117,6 +136,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_180502) do
     t.datetime "last_sign_in_at"
     t.string "last_sign_in_ip"
     t.datetime "locked_at"
+    t.boolean "must_change_password", default: false, null: false
     t.string "name", null: false
     t.string "phone"
     t.string "provider"
@@ -151,6 +171,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_180502) do
   add_foreign_key "order_items", "orders"
   add_foreign_key "orders", "users"
   add_foreign_key "otp_verifications", "users"
+  add_foreign_key "redemption_requests", "order_items"
+  add_foreign_key "redemption_requests", "tokens"
+  add_foreign_key "redemption_requests", "users", column: "vendor_id"
   add_foreign_key "tokens", "orders"
   add_foreign_key "vendor_profiles", "users"
 end

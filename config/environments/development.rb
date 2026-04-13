@@ -1,3 +1,4 @@
+
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
@@ -80,16 +81,20 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
 
   
-  config.hosts << "loxodromically-foliated-connie.ngrok-free.dev"
+
+  # Add your ngrok/tunnel host here when needed:
+  # config.hosts << ENV["NGROK_HOST"] if ENV["NGROK_HOST"].present?
 
 config.action_mailer.smtp_settings = {
-  address: "smtp.gmail.com",
-  port: 587,
-  domain: "gmail.com",
-  user_name: "noreplyfoodtoken.ccube@gmail.com",
-  password: "eqry argf lpla qcli",
-  authentication: "plain",
+  address:              ENV.fetch("SMTP_HOST",     "smtp.gmail.com"),
+  port:                 ENV.fetch("SMTP_PORT",     587).to_i,
+  domain:               ENV.fetch("SMTP_DOMAIN",   "gmail.com"),
+  user_name:            ENV.fetch("SMTP_USER",     "noreplyfoodtoken.ccube@gmail.com"),
+  password:             ENV.fetch("SMTP_PASSWORD", "eqry argf lpla qcli"),  # Set SMTP_PASSWORD env var
+  authentication:       :plain,
   enable_starttls_auto: true,
-  openssl_verify_mode: OpenSSL::SSL::VERIFY_NONE
+  # Use VERIFY_PEER in production; VERIFY_NONE only if local dev needs it
+  # openssl_verify_mode:  ENV["SMTP_SKIP_VERIFY"] ? OpenSSL::SSL::VERIFY_NONE : OpenSSL::SSL::VERIFY_PEER
+   openssl_verify_mode: "none"
 }
 end

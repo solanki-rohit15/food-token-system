@@ -33,7 +33,7 @@
                 </div>
               </td>
               <td class="small text-muted"><%= order.user.employee_profile&.department || "—" %></td>
-              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.name}" }.join(", ") %></td>
+              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
               <td><%= token_status_badge(order.token) %></td>
               <td class="small text-muted"><%= order.created_at.strftime("%I:%M %p") %></td>
             </tr>

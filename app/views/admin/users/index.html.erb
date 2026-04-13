@@ -14,7 +14,7 @@
   <div class="px-3 mb-3">
     <%= form_tag admin_users_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
       <input type="text" name="search" value="<%= params[:search] %>"
-             class="form-control form-control-sm ft-input" placeholder="Search name or email..."
+             class="form-control form-control-sm ft-input" placeholder="Search name or email…"
              style="width:200px">
       <select name="role" class="form-select form-select-sm ft-input" style="width:130px">
         <option value="">All Roles</option>
@@ -46,6 +46,9 @@
                 <div class="d-flex align-items-center gap-2">
                   <div class="ft-avatar-sm"><%= user.initials %></div>
                   <%= user.name %>
+                  <% if user.must_change_password? %>
+                    <span class="badge bg-warning text-dark" title="Must change password">🔑</span>
+                  <% end %>
                 </div>
               </td>
               <td class="small text-muted"><%= user.email %></td>
@@ -64,6 +67,10 @@
                   <%= button_to user.active? ? "Deactivate" : "Activate",
                         toggle_active_admin_user_path(user), method: :patch,
                         class: "btn btn-sm #{user.active? ? 'btn-outline-warning' : 'btn-outline-success'}" %>
+                  <%= button_to "Delete",
+                        admin_user_path(user), method: :delete,
+                        class: "btn btn-sm btn-outline-danger",
+                        data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." } %>
                 </div>
               </td>
             </tr>

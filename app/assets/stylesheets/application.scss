@@ -12,8 +12,8 @@
    ════════════════════════════════════════════════════════════════ */
 :root {
   /* Brand */
-  --cc-red:          #E32625;
-  --cc-red-dark:     #B81E1D;
+  --cc-red:          #9b2a2a;
+  --cc-red-dark:     #cd3b3b;
   --cc-red-light:    #FDEAEA;
   --cc-grey:         #5A6170;
   --cc-grey-dark:    #3A3F47;
@@ -654,14 +654,53 @@ body {
 
 /* QR token display */
 .ft-qr-wrapper {
-  width: 220px;
-  height: 220px;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+  padding: 12px;
+  background: var(--cc-white);
   border: 1px solid var(--cc-border);
   border-radius: var(--cc-radius);
-  padding: 8px;
-  margin: 0 auto;
-  background: var(--cc-white);
 }
+.ft-qr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 576px) {
+  .ft-qr-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ft-qr-item {
+  text-align: center;
+  padding: 10px;
+  border: 1px solid var(--cc-border);
+  border-radius: var(--cc-radius-sm);
+  background: var(--cc-grey-light);
+}
+
+.ft-qr-img {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  margin: 6px auto;
+  display: block;
+}
+
+.ft-qr-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.ft-qr-code-text {
+  font-size: 11px;
+  color: var(--cc-grey);
+}
+
 .ft-qr-wrapper svg { width: 100%; height: 100%; }
 .ft-token-card {
   background: var(--cc-white);
@@ -927,4 +966,133 @@ body {
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   REDEMPTION REQUEST — Employee approval panel
+   ════════════════════════════════════════════════════════════════ */
+.ft-redemption-request-card {
+  border: 2px solid var(--cc-red);
+  border-radius: var(--cc-radius);
+  overflow: hidden;
+  animation: ft-pulse-border 1.5s ease-in-out infinite;
+}
+
+@keyframes ft-pulse-border {
+  0%, 100% { border-color: var(--cc-red); }
+  50%       { border-color: var(--cc-red-dark); box-shadow: 0 0 0 4px rgba(155,42,42,.15); }
+}
+
+.ft-req-header {
+  background: var(--cc-red);
+  color: var(--cc-white);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 16px;
+}
+
+.ft-req-body {
+  padding: 14px 16px;
+  background: var(--cc-red-light);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   STATUS ICON BLOCK — Redeemed / Expired placeholder
+   ════════════════════════════════════════════════════════════════ */
+.ft-status-icon-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.ft-status-icon { font-size: 64px; }
+
+/* ════════════════════════════════════════════════════════════════
+   META ROW — key/value pairs in cards
+   ════════════════════════════════════════════════════════════════ */
+.ft-meta-row {
+  font-size: 13px;
+  color: var(--cc-grey);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--cc-border);
+
+  &:last-child { border-bottom: none; }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FILTER INPUTS — fixed widths via classes (no inline style=)
+   ════════════════════════════════════════════════════════════════ */
+.ft-filter-date    { width: 160px; }
+.ft-filter-status  { width: 150px; }
+.ft-filter-search  { width: 200px; }
+.ft-filter-month   { width: 160px; }
+.ft-filter-price   { width: 130px; }
+.ft-filter-time    { width: 130px; }
+
+/* ════════════════════════════════════════════════════════════════
+   CURSOR POINTER UTILITY
+   ════════════════════════════════════════════════════════════════ */
+.ft-clickable { cursor: pointer; }
+
+/* ════════════════════════════════════════════════════════════════
+   EMOJI ICON — large display
+   ════════════════════════════════════════════════════════════════ */
+.ft-emoji-lg  { font-size: 48px; display: block; }
+.ft-emoji-md  { font-size: 24px; display: block; }
+
+/* ════════════════════════════════════════════════════════════════
+   LEGEND DOT — dashboard legend
+   ════════════════════════════════════════════════════════════════ */
+.ft-legend-dot { font-size: 8px; }
+
+/* ════════════════════════════════════════════════════════════════
+   PROGRESS BAR DYNAMIC WIDTH — use data attribute + JS or
+   pass via a generated CSS class in the view helper
+   ════════════════════════════════════════════════════════════════ */
+.ft-progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--cc-red);
+  transition: width 0.4s ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   QR SVG OVERRIDE — per-item QR sizing
+   ════════════════════════════════════════════════════════════════ */
+.ft-qr-item svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── Progress bar (replaces inline height) ── */
+.ft-progress-sm {
+  height: 6px;
+  min-width: 60px;
+  background: var(--cc-grey-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* ── Small text utility ── */
+.ft-text-xs { font-size: 11px; }
+
+/* ── Auth page utilities ── */
+.ft-auth-narrow { max-width: 420px; }
+.ft-min-full    { min-height: 100vh; }
+
+/* ── Auth page container ── */
+.ft-auth-container {
+  max-width: 460px;
+  width: 100%;
+  padding: 24px;
+}
+
+/* ── Location banner warning variant ── */
+.ft-flash-warning {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  color: #856404;
 }

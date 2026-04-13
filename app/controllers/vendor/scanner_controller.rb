@@ -2,33 +2,21 @@ class Vendor::ScannerController < ApplicationController
   before_action :authenticate_user!
   before_action :ensure_vendor!
 
-  def index
-    # QR scanner page
-  end
+  def index; end
 
   def verify
     qr_data = params[:qr_data].to_s.strip
 
-    token = resolve_token(qr_data)
+    # Try item-level QR first, then token-level
+    item   = resolve_order_item(qr_data)
+    token  = item&.order&.token || resolve_token(qr_data)
 
-    if token.nil?
-      render json: { valid: false, message: "Token not found." }, status: :not_found and return
-    end
+    return render_json_error("Token not found.")                     if token.nil?
+    return render_json_error("Token has already been redeemed.",
+                             redeemed_at: token.redeemed_at&.strftime("%I:%M %p")) if token.redeemed?
+    return render_json_error("Token has expired.")                   if token.expired?
 
-    if token.redeemed?
-      render json: {
-        valid:       false,
-        message:     "This token has already been redeemed.",
-        redeemed_at: token.redeemed_at&.strftime("%I:%M %p")
-      }, status: :unprocessable_entity and return
-    end
-
-    if token.expired?
-      render json: { valid: false, message: "This token has expired." },
-        status: :unprocessable_entity and return
-    end
-
-    # Notify employee via ActionCable
+    # Broadcast scan notification to employee via ActionCable
     ActionCable.server.broadcast("user_#{token.user.id}", {
       event:    "scan_request",
       token_id: token.id,
@@ -37,26 +25,43 @@ class Vendor::ScannerController < ApplicationController
     })
 
     render json: {
-      valid:    true,
-      token_id: token.id,
+      valid:        true,
+      token_id:     token.id,
+      token_number: token.token_number,
+      scanned_item: item ? { item_code: item.item_code, category: item.food_item.category_label } : nil,
       employee: {
         name:       token.user.name,
         email:      token.user.email,
         initials:   token.user.initials,
         department: token.user.employee_profile&.department
       },
-      items:      token.food_items.map { |fi| { name: fi.name, icon: fi.icon, category: fi.category_label } },
+      items:      token.food_items.map { |fi|
+        { icon: fi.icon, label: fi.category_label, category: fi.category }
+      },
       expires_at: token.expires_at.strftime("%I:%M %p")
     }
   end
 
   private
 
-  def resolve_token(data)
+  def resolve_order_item(data)
     parsed = JSON.parse(data)
-    Token.find_by(id: parsed["token_id"], qr_code: parsed["code"])
+    return nil unless parsed["item"]
+    OrderItem.joins(:order)
+             .includes(order: [:token, :food_items])
+             .find_by(item_code: parsed["item"])
   rescue JSON::ParserError
-    Token.find_by(qr_code: data)
+    OrderItem.joins(:order).includes(order: [:token, :food_items])
+             .find_by(item_code: data.strip)
+  end
+
+  def resolve_token(data)
+    Token.find_by_qr(data)
+  end
+
+  def render_json_error(message, extra = {})
+    render json: { valid: false, message: message }.merge(extra),
+           status: :unprocessable_entity
   end
 
   def ensure_vendor!
