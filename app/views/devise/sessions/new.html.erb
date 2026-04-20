@@ -1,0 +1,47 @@
+<% content_for :title, "Sign In — CCube Food Token" %>
+
+<div class="ft-auth-card">
+  <div class="ft-auth-header">
+    <%= image_tag "ccube_logo.webp", alt: "CCube", class: "cc-auth-logo" %>
+    <h1 class="ft-auth-title">Welcome Back</h1>
+    <p class="ft-auth-sub">Sign in to your cafeteria account</p>
+  </div>
+
+  <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
+    <% if resource.errors.any? %>
+      <div class="alert alert-danger alert-sm mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <%= resource.errors.full_messages.first %>
+      </div>
+    <% end %>
+
+    <div class="mb-3">
+      <label class="form-label ft-label">Email</label>
+      <%= f.email_field :email, autofocus: true, autocomplete: "email",
+            class: "form-control ft-input", placeholder: "you@company.com" %>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label ft-label">Password</label>
+      <%= f.password_field :password, autocomplete: "current-password",
+            class: "form-control ft-input", placeholder: "Your password" %>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <%= link_to "Forgot password?", new_user_password_path, class: "text-muted small text-decoration-none" %>
+    </div>
+
+    <%= f.submit "Sign In", class: "btn cc-btn-primary w-100 mb-3" %>
+  <% end %>
+
+  <div class="text-center text-muted mb-3">or</div>
+
+  <%= button_to user_google_oauth2_omniauth_authorize_path,
+                method: :post,
+                class: "btn ft-btn-google w-100",
+                form: { data: { turbo: false } } do %>
+    <i class="bi bi-google me-2"></i>
+    Sign in with Google
+  <% end %>
+
+</div>

@@ -1,0 +1,105 @@
+<% content_for :title, "Reports — FoodToken Admin" %>
+
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3">
+    <h2 class="ft-page-title mb-1">Reports</h2>
+  </div>
+
+  <%# Date picker filter %>
+  <div class="px-3 mb-3">
+    <%= form_tag admin_reports_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
+      <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>"
+             class="form-control form-control-sm ft-input" style="width:160px">
+      <button type="submit" class="btn btn-sm ft-btn-primary">
+        <i class="bi bi-filter me-1"></i>Filter
+      </button>
+      <div class="ms-auto d-flex gap-2">
+        <%= link_to daily_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-secondary" do %>
+          <i class="bi bi-calendar-day me-1"></i>Daily
+        <% end %>
+        <%= link_to monthly_admin_reports_path, class: "btn btn-sm btn-outline-secondary" do %>
+          <i class="bi bi-calendar-month me-1"></i>Monthly
+        <% end %>
+        <%= link_to employee_wise_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-secondary" do %>
+          <i class="bi bi-people me-1"></i>By Employee
+        <% end %>
+        <%= link_to export_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-success" do %>
+          <i class="bi bi-download me-1"></i>CSV
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Summary cards %>
+  <div class="px-3 mb-3">
+    <div class="row g-2">
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val"><%= @total %></div>
+          <div class="ft-stat-label">Total Tokens</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-success"><%= @redeemed %></div>
+          <div class="ft-stat-label">Redeemed</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-warning"><%= @active %></div>
+          <div class="ft-stat-label">Active</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-danger"><%= @expired %></div>
+          <div class="ft-stat-label">Expired</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Tokens table %>
+  <div class="px-3">
+    <div class="table-responsive">
+      <table class="table ft-table align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Employee</th>
+            <th>Department</th>
+            <th>Items</th>
+            <th>Token</th>
+            <th>Status</th>
+            <th>Redeemed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @tokens.each do |token| %>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ft-avatar-sm"><%= token.user.initials %></div>
+                  <div>
+                    <div class="fw-semibold small"><%= token.user.name %></div>
+                    <div class="text-muted" style="font-size:11px"><%= token.user.email %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="small text-muted"><%= token.user.employee_profile&.department || "—" %></td>
+              <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+              <td><span class="badge bg-light border text-dark font-monospace">#<%= token.id.to_s.rjust(6,"0") %></span></td>
+              <td><%= token_status_badge(token) %></td>
+              <td class="small text-muted"><%= token.redeemed_at&.strftime("%I:%M %p") || "—" %></td>
+            </tr>
+          <% end %>
+          <% if @tokens.empty? %>
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No records for <%= @date.strftime("%d %b %Y") %>.</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

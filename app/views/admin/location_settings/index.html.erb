@@ -1,0 +1,92 @@
+<% content_for :title, "Location Settings — Admin" %>
+
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3">
+    <h2 class="ft-page-title mb-1">GPS Location Settings</h2>
+    <p class="text-muted small mb-0">Control where employees can access the system.</p>
+  </div>
+
+  <div class="px-3 mt-3">
+    <div class="alert alert-info d-flex gap-2 mb-4">
+      <i class="bi bi-info-circle-fill fs-5 mt-1 flex-shrink-0"></i>
+      <div>
+        <strong>How it works:</strong> When enabled, employees must be within the radius of the
+        office location below. Disable to allow access from anywhere.
+      </div>
+    </div>
+
+    <%= form_tag admin_location_settings_path, method: :patch do %>
+      <div class="card ft-card mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-geo-alt-fill me-2 text-danger"></i>GPS Restriction</h5>
+        </div>
+        <div class="card-body">
+
+          <div class="form-check form-switch mb-4">
+            <input type="hidden" name="location_setting[enabled]" value="0">
+            <input type="checkbox" name="location_setting[enabled]" value="1"
+                   class="form-check-input" id="gps-enabled"
+                   <%= @setting.enabled? ? "checked" : "" %>>
+            <label class="form-check-label fw-semibold" for="gps-enabled">Enable GPS Restriction</label>
+            <div class="form-text">Employees outside the radius below will be blocked.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label ft-label">Location Name</label>
+            <input type="text" name="location_setting[name]"
+                   value="<%= @setting.name %>" class="form-control ft-input" placeholder="Main Office">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label ft-label">Office Latitude</label>
+              <input type="number" step="0.000001" name="location_setting[latitude]"
+                     value="<%= @setting.latitude %>"
+                     class="form-control ft-input font-monospace" placeholder="22.719600">
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label ft-label">Office Longitude</label>
+              <input type="number" step="0.000001" name="location_setting[longitude]"
+                     value="<%= @setting.longitude %>"
+                     class="form-control ft-input font-monospace" placeholder="75.857700">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label ft-label">
+              Allowed Radius
+              <span class="text-muted fw-normal small" id="radius-display">
+                — <%= @setting.radius_meters || 100 %>m
+              </span>
+            </label>
+            <%# id="radius-slider" picked up by app_ui.js %>
+            <input type="range" name="location_setting[radius_meters]"
+                   id="radius-slider"
+                   value="<%= @setting.radius_meters || 100 %>"
+                   min="25" max="2000" step="25" class="form-range">
+            <div class="d-flex justify-content-between text-muted small">
+              <span>25 m</span><span>500 m</span><span>1 km</span><span>2 km</span>
+            </div>
+          </div>
+
+          <div class="alert alert-light border d-flex align-items-center gap-3">
+            <i class="bi bi-crosshair2 fs-4 text-primary"></i>
+            <div class="flex-fill">
+              <div class="fw-semibold small">Set to My Current Location</div>
+              <div class="text-muted small">Fills lat/lng from your browser GPS.</div>
+            </div>
+            <%# id picked up by app_ui.js %>
+            <button type="button" id="use-my-location-btn" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-geo me-1"></i>Use My Location
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <button type="submit" class="btn ft-btn-primary px-5">
+        <i class="bi bi-save me-2"></i>Save Settings
+      </button>
+    <% end %>
+  </div>
+</div>

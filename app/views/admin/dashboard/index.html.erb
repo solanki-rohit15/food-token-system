@@ -1,0 +1,181 @@
+<% content_for :title, "Admin Dashboard — FoodToken" %>
+
+<div class="ft-page pb-4">
+  <div class="ft-admin-header px-3 py-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="ft-page-title mb-0">Admin Dashboard</h2>
+        <p class="text-muted small mb-0"><%= Date.current.strftime("%A, %d %B %Y") %></p>
+      </div>
+      <div class="badge bg-danger px-3 py-2">
+        <i class="bi bi-shield-fill me-1"></i>Admin
+      </div>
+    </div>
+  </div>
+
+  <%# Stats %>
+  <div class="px-3 mt-2">
+    <div class="row g-2">
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-primary"><%= @stats[:total_employees] %></div>
+          <div class="ft-stat-label">Employees</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val"><%= @stats[:today_orders] %></div>
+          <div class="ft-stat-label">Today Orders</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-success"><%= @stats[:today_redeemed] %></div>
+          <div class="ft-stat-label">Redeemed</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="ft-stat-card">
+          <div class="ft-stat-val text-danger"><%= @stats[:today_expired] %></div>
+          <div class="ft-stat-label">Expired</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Quick Actions %>
+  <div class="ft-section px-3 mt-3">
+    <div class="ft-section-label">Manage</div>
+    <div class="row g-2">
+      <div class="col-6">
+        <%= link_to admin_users_path, class: "ft-admin-action-card text-decoration-none" do %>
+          <div class="ft-action-icon">👥</div>
+          <div class="ft-action-label">Users</div>
+          <div class="ft-action-count"><%= @stats[:total_employees] %> employees</div>
+        <% end %>
+      </div>
+      <div class="col-6">
+        <%= link_to admin_food_items_path, class: "ft-admin-action-card text-decoration-none" do %>
+          <div class="ft-action-icon">🍽️</div>
+          <div class="ft-action-label">Food Items</div>
+          <div class="ft-action-count"><%= @stats[:food_items] %> active</div>
+        <% end %>
+      </div>
+      <div class="col-6">
+       <%= link_to admin_meal_settings_path, class: "ft-admin-action-card text-decoration-none" do %>
+          <div class="ft-action-icon">⏰</div>
+          <div class="ft-action-label">Time Slots</div>
+          <div class="ft-action-count">Configure</div>
+        <% end %>
+      </div>
+      <div class="col-6">
+        <%= link_to admin_reports_path, class: "ft-admin-action-card text-decoration-none" do %>
+          <div class="ft-action-icon">📊</div>
+          <div class="ft-action-label">Reports</div>
+          <div class="ft-action-count">Daily & Monthly</div>
+        <% end %>
+      </div>
+      <div class="col-6">
+        <%= link_to admin_tokens_path, class: "ft-admin-action-card text-decoration-none" do %>
+          <div class="ft-action-icon">🎫</div>
+          <div class="ft-action-label">All Tokens</div>
+          <div class="ft-action-count"><%= @stats[:today_active] %> active today</div>
+        <% end %>
+      </div>
+      <div class="col-6">
+        <%= link_to admin_location_settings_path, class: "ft-admin-action-card text-decoration-none" do %>
+          <div class="ft-action-icon">📍</div>
+          <div class="ft-action-label">Location</div>
+          <div class="ft-action-count">IP & GPS</div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%# Meal breakdown %>
+  <div class="ft-section px-3 mt-3">
+    <div class="ft-section-label">Today's Meal Breakdown</div>
+    <div class="ft-vendor-card">
+      <% @meal_breakdown.each do |m| %>
+        <div class="ft-meal-breakdown-row">
+          <div class="ft-meal-bd-icon"><%= m[:icon] %></div>
+          <div class="ft-meal-bd-name"><%= m[:label] %></div>
+          <div class="ft-meal-bd-bar flex-fill mx-3">
+            <div class="ft-progress-bar">
+              <% total = @stats[:today_orders].to_f
+                 pct = total > 0 ? [(m[:count].to_f / total * 100).round, 100].min : 0 %>
+              <div class="ft-progress-fill bg-primary" style="width: <%= pct %>%"></div>
+            </div>
+          </div>
+          <div class="ft-meal-bd-count fw-semibold"><%= m[:count] %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Token status summary %>
+  <div class="ft-section px-3 mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="ft-section-label mb-0">Token Status Today</div>
+      <%= link_to "View all", admin_tokens_path, class: "small text-primary text-decoration-none" %>
+    </div>
+    <div class="ft-vendor-card">
+      <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+        <span><i class="bi bi-circle-fill text-success me-2" style="font-size:8px;"></i>Active</span>
+        <span class="badge bg-success-subtle text-success border border-success-subtle"><%= @stats[:today_active] %></span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+        <span><i class="bi bi-circle-fill text-secondary me-2" style="font-size:8px;"></i>Redeemed</span>
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><%= @stats[:today_redeemed] %></span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center py-2">
+        <span><i class="bi bi-circle-fill text-danger me-2" style="font-size:8px;"></i>Expired</span>
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><%= @stats[:today_expired] %></span>
+      </div>
+    </div>
+  </div>
+
+  <%# Recent tokens %>
+  <% if @recent_tokens.any? %>
+    <div class="ft-section px-3 mt-3">
+      <div class="ft-section-label">Recent Activity</div>
+      <% @recent_tokens.each do |token| %>
+        <div class="ft-recent-scan-row">
+          <div class="ft-avatar-sm">
+            <%= token.user.initials %>
+          </div>
+          <div class="flex-fill ms-2">
+            <div class="fw-semibold small"><%= token.user.name %></div>
+            <div class="text-muted" style="font-size:11px;"><%= token.summary %></div>
+          </div>
+          <% if token.active? %>
+            <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+          <% elsif token.redeemed? %>
+            <span class="badge bg-secondary-subtle text-secondary">Redeemed</span>
+          <% else %>
+            <span class="badge bg-danger-subtle text-danger">Expired</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<%# Admin bottom nav %>
+<nav class="ft-bottom-nav d-lg-none">
+  <%= link_to admin_root_path, class: "ft-bn-item active" do %>
+    <i class="bi bi-grid-fill ft-bn-icon"></i><span>Dashboard</span>
+  <% end %>
+  <%= link_to admin_users_path, class: "ft-bn-item" do %>
+    <i class="bi bi-people-fill ft-bn-icon"></i><span>Users</span>
+  <% end %>
+  <%= link_to admin_food_items_path, class: "ft-bn-item" do %>
+    <i class="bi bi-egg-fried ft-bn-icon"></i><span>Food</span>
+  <% end %>
+  <%= link_to admin_tokens_path, class: "ft-bn-item" do %>
+    <i class="bi bi-ticket-perforated ft-bn-icon"></i><span>Tokens</span>
+  <% end %>
+  <%= link_to admin_reports_path, class: "ft-bn-item" do %>
+    <i class="bi bi-bar-chart-fill ft-bn-icon"></i><span>Reports</span>
+  <% end %>
+</nav>

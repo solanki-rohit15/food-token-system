@@ -1,0 +1,110 @@
+<% content_for :title, "Token ##{@token.token_number} — FoodToken" %>
+
+<%# Pass status URL via body data attribute — app_ui.js picks it up %>
+<% content_for :body_data do %>
+  data-token-status-url="<%= status_employee_token_path(@token) %>"
+<% end %>
+
+<div class="ft-page pb-5">
+  <div class="px-3 py-3 d-flex align-items-center gap-2">
+    <%= link_to employee_tokens_path, class: "btn btn-sm btn-outline-secondary" do %>
+      <i class="bi bi-arrow-left"></i> Back
+    <% end %>
+    <h2 class="ft-page-title mb-0">Your Food Token</h2>
+  </div>
+
+  <div class="px-3">
+    <div class="row g-3 justify-content-center">
+      <div class="col-md-7 col-lg-6">
+
+        <%# Token header %>
+        <div class="ft-token-card text-center p-4 mb-3">
+          <div class="mb-2"><%= token_status_badge(@token) %></div>
+          <div class="ft-token-number font-monospace mb-1"><%= @token.token_number %></div>
+          <% if @token.active? && !@token.expired_by_time? %>
+            <div class="text-muted small mb-3">
+              <i class="bi bi-clock me-1"></i>Valid until
+              <strong><%= @token.expires_at.strftime("%I:%M %p") %></strong>
+            </div>
+          <% elsif @token.fully_redeemed? %>
+            <div class="text-success small mb-3">
+              <i class="bi bi-check-circle-fill me-1"></i>
+              All items redeemed at <strong><%= @token.redeemed_at&.strftime("%I:%M %p") %></strong>
+            </div>
+          <% end %>
+        </div>
+
+        <%# Pending approvals %>
+        <% if @pending_requests.present? %>
+          <div class="mb-3">
+            <div class="ft-section-label mb-2">⚡ Pending Approvals</div>
+            <% @pending_requests.each do |req| %>
+              <div class="card border-warning mb-2">
+                <div class="card-body py-2 px-3">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-bell-fill text-warning"></i>
+                    <span class="fw-semibold small">
+                      <strong><%= req.vendor.name %></strong>
+                      <% if req.vendor.vendor_profile %> (<%= req.vendor.vendor_profile.stall_name %>)<% end %>
+                      wants to redeem:
+                      <span class="badge bg-primary">
+                        <%= req.order_item.food_item.icon %> <%= req.order_item.food_item.category_label %>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <%= button_to "✅ Approve", approve_employee_redemption_request_path(req),
+                          method: :post, class: "btn btn-success btn-sm flex-fill",
+                          data: { turbo_confirm: "Approve #{req.order_item.food_item.category_label}?" } %>
+                    <%= button_to "❌ Reject", reject_employee_redemption_request_path(req),
+                          method: :post, class: "btn btn-outline-danger btn-sm flex-fill" %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%# Per-item QR cards %>
+        <div class="ft-section-label mb-2">Meal QR Codes</div>
+        <% @order_items.each do |item| %>
+          <div class="card mb-3 <%= item.redeemed? ? 'border-success opacity-75' : 'border-primary' %>">
+            <div class="card-header d-flex align-items-center justify-content-between py-2">
+              <span class="fw-semibold"><%= item.food_item.icon %> <%= item.food_item.category_label %></span>
+              <% if item.redeemed? %>
+                <span class="badge bg-success">✅ <%= item.redeemed_at&.strftime("%I:%M %p") %></span>
+              <% elsif item.pending_redemption_request? %>
+                <span class="badge bg-warning text-dark">⏳ Pending</span>
+              <% else %>
+                <span class="badge bg-light border text-dark">Active</span>
+              <% end %>
+            </div>
+            <% unless item.redeemed? %>
+              <div class="card-body text-center py-3">
+                <div class="ft-qr-img mx-auto mb-2" style="max-width:200px"><%= raw item.qr_svg %></div>
+                <div class="text-muted small font-monospace"><%= item.item_code %></div>
+              </div>
+            <% else %>
+              <div class="card-body text-center py-3 text-success">
+                <i class="bi bi-check-circle-fill fs-1"></i>
+                <div class="mt-1 small">Redeemed by <%= item.redeemed_by&.name || "vendor" %></div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+
+        <div class="ft-token-card p-3">
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted">Date</td><td class="fw-semibold"><%= @order.date.strftime("%d %b %Y") %></td></tr>
+            <tr><td class="text-muted">Employee</td><td class="fw-semibold"><%= current_user.name %></td></tr>
+            <tr>
+              <td class="text-muted">Items</td>
+              <td class="fw-semibold"><%= @order_items.count %> selected, <%= @order_items.count(&:redeemed?) %> redeemed</td>
+            </tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,72 @@
+<% content_for :title, "#{@user.name} — Admin" %>
+
+<div class="ft-page pb-5">
+  <div class="px-3 py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <%= link_to admin_users_path, class: "btn btn-sm btn-outline-secondary" do %><i class="bi bi-arrow-left"></i><% end %>
+      <h2 class="ft-page-title mb-0"><%= @user.name %></h2>
+      <%= role_badge(@user.role) %>
+      <%= @user.active? ? content_tag(:span, "Active", class: "badge bg-success") : content_tag(:span, "Inactive", class: "badge bg-secondary") %>
+    </div>
+    <div class="d-flex gap-2">
+      <%= link_to "Edit", edit_admin_user_path(@user), class: "btn btn-sm btn-outline-primary" %>
+      <%= button_to @user.active? ? "Deactivate" : "Activate",
+            toggle_active_admin_user_path(@user), method: :patch,
+            class: "btn btn-sm #{@user.active? ? 'btn-outline-warning' : 'btn-outline-success'}" %>
+      <%= button_to "Resend Invite", resend_invitation_admin_user_path(@user), method: :post,
+            class: "btn btn-sm btn-outline-info" %>
+    </div>
+  </div>
+
+  <div class="px-3">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card ft-card">
+          <div class="card-body text-center">
+            <div class="ft-avatar-xl mx-auto mb-3"><%= @user.initials %></div>
+            <h5 class="fw-bold mb-0"><%= @user.name %></h5>
+            <p class="text-muted small mb-2"><%= @user.email %></p>
+            <% if @user.phone.present? %>
+              <p class="text-muted small mb-2"><i class="bi bi-phone me-1"></i><%= @user.phone %></p>
+            <% end %>
+            <% if @user.employee_profile.present? %>
+              <p class="text-muted small mb-0">
+                <i class="bi bi-building me-1"></i><%= @user.employee_profile.department %>
+                &bull; ID: <span class="font-monospace"><%= @user.employee_profile.employee_id %></span>
+              </p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="card ft-card">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">Recent Tokens</h5>
+            <span class="badge bg-secondary"><%= @recent_tokens.count %></span>
+          </div>
+          <div class="table-responsive">
+            <table class="table ft-table align-middle mb-0">
+              <thead class="table-light">
+                <tr><th>Date</th><th>Items</th><th>Token</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <% @recent_tokens.each do |token| %>
+                  <tr>
+                    <td class="small text-muted"><%= token.order.date.strftime("%d %b %Y") %></td>
+                    <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+                    <td><span class="badge bg-light border text-dark font-monospace"><%= token.token_number %></span></td>
+                    <td><%= token_status_badge(token) %></td>
+                  </tr>
+                <% end %>
+                <% if @recent_tokens.empty? %>
+                  <tr><td colspan="4" class="text-center text-muted py-3">No tokens yet.</td></tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

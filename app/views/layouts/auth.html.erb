@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title><%= content_for(:title) || "FoodToken — Login" %></title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <link rel="icon" href="/icon.png" type="image/png">
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+</head>
+<body class="auth-body">
+
+  <% if notice.present? %>
+    <div class="ft-flash ft-flash-success" id="flash-notice">
+      <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
+      <button type="button" class="ft-flash-close" onclick="this.parentElement.remove()">&times;</button>
+    </div>
+  <% end %>
+  <% if alert.present? %>
+    <div class="ft-flash ft-flash-danger" id="flash-alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i><%= alert %>
+      <button type="button" class="ft-flash-close" onclick="this.parentElement.remove()">&times;</button>
+    </div>
+  <% end %>
+
+  <div class="auth-main">
+    <%= yield %>
+  </div>
+
+</body>
+</html>

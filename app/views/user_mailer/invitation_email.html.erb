@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background:#f4f6f8; margin:0; padding:20px; }
+    .container { max-width:480px; margin:0 auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,.08); }
+    .header { background:linear-gradient(135deg,#1a7a4a,#0d5c36); padding:32px 24px; text-align:center; color:#fff; }
+    .logo { font-size:40px; margin-bottom:8px; }
+    .header h1 { font-size:22px; font-weight:700; margin:0; }
+    .body { padding:32px 24px; }
+    .cred-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px 20px; margin:16px 0; font-family:monospace; }
+    .cred-box .label { font-size:11px; text-transform:uppercase; color:#6b7280; font-family:sans-serif; }
+    .cred-box .value { font-size:16px; font-weight:700; color:#1a7a4a; letter-spacing:1px; }
+    .btn { display:inline-block; background:#1a7a4a; color:#fff; padding:14px 28px; border-radius:10px; text-decoration:none; font-weight:600; font-size:15px; margin:16px 0; }
+    .role-badge { display:inline-block; background:#e8f5ee; color:#1a7a4a; border:1px solid #c6e8d6; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:600; margin-bottom:16px; }
+    .footer { background:#f9fafb; padding:16px 24px; text-align:center; font-size:11px; color:#9ca3af; }
+    p { color:#374151; line-height:1.6; }
+    .warning { font-size:12px; color:#9ca3af; margin-top:16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🍽️</div>
+      <h1>Welcome to FoodToken!</h1>
+    </div>
+    <div class="body">
+      <p>Hi <strong><%= @user.name %></strong>,</p>
+      <p>Your account has been created on the <strong>FoodToken Smart Cafeteria System</strong>.</p>
+
+      <div class="role-badge">
+        <% if @user.employee? %>👤 Employee
+        <% elsif @user.vendor? %>🧑‍🍳 Vendor
+        <% else %>⚙️ Admin<% end %>
+      </div>
+
+      <p><strong>Your login credentials:</strong></p>
+
+      <div class="cred-box">
+        <div class="label">Email</div>
+        <div class="value"><%= @user.email %></div>
+      </div>
+
+      <div class="cred-box">
+        <div class="label">Temporary Password</div>
+        <div class="value"><%= @temp_password %></div>
+      </div>
+
+      <p style="font-size:13px;color:#e53e3e;font-weight:600;">
+        ⚠️ You will be asked to change this password on your first login.
+      </p>
+
+      <div style="text-align:center;">
+        <a href="<%= @login_url %>" class="btn">🚀 Login Now</a>
+      </div>
+
+      <p class="warning">
+        If you did not expect this email, please contact your system administrator immediately.
+      </p>
+    </div>
+    <div class="footer">
+      © <%= Date.current.year %> FoodToken System. Secure Cafeteria Management.
+    </div>
+  </div>
+</body>
+</html>

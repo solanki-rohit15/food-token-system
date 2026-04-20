@@ -1,0 +1,48 @@
+<% content_for :title, "Employee-wise Report — Admin" %>
+<div class="ft-page pb-5">
+  <div class="px-3 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="ft-page-title mb-0">Employee-wise Report</h2>
+      <p class="text-muted small mb-0"><%= @date.strftime("%d %B %Y") %></p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <%= form_tag employee_wise_admin_reports_path, method: :get, class: "d-flex gap-2" do %>
+        <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>"
+               class="form-control form-control-sm ft-input" style="width:160px" onchange="this.form.submit()">
+      <% end %>
+      <%= link_to admin_reports_path, class: "btn btn-sm btn-outline-secondary" do %><i class="bi bi-arrow-left me-1"></i>Back<% end %>
+    </div>
+  </div>
+
+  <div class="px-3">
+    <div class="table-responsive">
+      <table class="table ft-table align-middle">
+        <thead class="table-light">
+          <tr><th>Employee</th><th>Department</th><th>Items Ordered</th><th>Token Status</th><th>Time</th></tr>
+        </thead>
+        <tbody>
+          <% @date_orders.each do |order| %>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ft-avatar-sm"><%= order.user.initials %></div>
+                  <div>
+                    <div class="fw-semibold small"><%= order.user.name %></div>
+                    <div class="text-muted" style="font-size:11px"><%= order.user.email %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="small text-muted"><%= order.user.employee_profile&.department || "—" %></td>
+              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+              <td><%= token_status_badge(order.token) %></td>
+              <td class="small text-muted"><%= order.created_at.strftime("%I:%M %p") %></td>
+            </tr>
+          <% end %>
+          <% if @date_orders.empty? %>
+            <tr><td colspan="5" class="text-center text-muted py-4">No orders on this date.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

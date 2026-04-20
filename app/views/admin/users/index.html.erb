@@ -1,0 +1,88 @@
+<% content_for :title, "Users — Admin" %>
+
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="ft-page-title mb-0">Users</h2>
+      <p class="text-muted small mb-0"><%= @users.total_count %> records</p>
+    </div>
+    <%= link_to new_admin_user_path, class: "btn ft-btn-primary btn-sm" do %>
+      <i class="bi bi-person-plus me-1"></i>Add User
+    <% end %>
+  </div>
+
+  <div class="px-3 mb-3">
+    <%= form_tag admin_users_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
+      <input type="text" name="search" value="<%= params[:search] %>"
+             class="form-control form-control-sm ft-input" placeholder="Search name or email…"
+             style="width:200px">
+      <select name="role" class="form-select form-select-sm ft-input" style="width:130px">
+        <option value="">All Roles</option>
+        <option value="employee" <%= "selected" if params[:role]=="employee" %>>Employee</option>
+        <option value="vendor"   <%= "selected" if params[:role]=="vendor"   %>>Vendor</option>
+      </select>
+      <select name="active" class="form-select form-select-sm ft-input" style="width:120px">
+        <option value="">All Status</option>
+        <option value="true"  <%= "selected" if params[:active]=="true"  %>>Active</option>
+        <option value="false" <%= "selected" if params[:active]=="false" %>>Inactive</option>
+      </select>
+      <button type="submit" class="btn btn-sm ft-btn-primary">
+        <i class="bi bi-search me-1"></i>Search
+      </button>
+      <%= link_to "Clear", admin_users_path, class: "btn btn-sm btn-outline-secondary" %>
+    <% end %>
+  </div>
+
+  <div class="px-3">
+    <div class="table-responsive">
+      <table class="table ft-table align-middle">
+        <thead class="table-light">
+          <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <% @users.each do |user| %>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ft-avatar-sm"><%= user.initials %></div>
+                  <%= user.name %>
+                  <% if user.must_change_password? %>
+                    <span class="badge bg-warning text-dark" title="Must change password">🔑</span>
+                  <% end %>
+                </div>
+              </td>
+              <td class="small text-muted"><%= user.email %></td>
+              <td><%= role_badge(user.role) %></td>
+              <td>
+                <% if user.active? %>
+                  <span class="badge bg-success">Active</span>
+                <% else %>
+                  <span class="badge bg-secondary">Inactive</span>
+                <% end %>
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <%= link_to "View", admin_user_path(user), class: "btn btn-sm btn-outline-secondary" %>
+                  <%= link_to "Edit", edit_admin_user_path(user), class: "btn btn-sm btn-outline-primary" %>
+                  <%= button_to user.active? ? "Deactivate" : "Activate",
+                        toggle_active_admin_user_path(user), method: :patch,
+                        class: "btn btn-sm #{user.active? ? 'btn-outline-warning' : 'btn-outline-success'}" %>
+                  <%= button_to "Delete",
+                        admin_user_path(user), method: :delete,
+                        class: "btn btn-sm btn-outline-danger",
+                        data: { turbo_confirm: "Delete #{user.name}? This cannot be undone." } %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+          <% if @users.empty? %>
+            <tr><td colspan="5" class="text-center text-muted py-4">No users found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if @users.respond_to?(:total_pages) && @users.total_pages > 1 %>
+      <div class="d-flex justify-content-center mt-3"><%= paginate @users %></div>
+    <% end %>
+  </div>
+</div>

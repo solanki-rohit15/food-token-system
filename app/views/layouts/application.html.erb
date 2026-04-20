@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title><%= content_for(:title) || "FoodToken System" %></title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <%# Required by location.js — must be set before JS runs %>
+  <meta name="current-user-role" content="<%= current_user&.role || 'guest' %>">
+  <meta name="current-user-id"   content="<%= current_user&.id %>">
+
+  <%= yield :head %>
+  <link rel="icon" href="/icon.png" type="image/png">
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+<%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+</head>
+
+<%# body data attributes used by app_ui.js (e.g. token status polling URL) %>
+<body class="<%= user_signed_in? ? "app-body role-#{current_user.role}" : "auth-body" %>"
+      <%= yield(:body_data) %>>
+
+  <% if user_signed_in? %>
+    <%= render "shared/navbar" %>
+  <% end %>
+
+  <%# Flash messages %>
+  <% if notice.present? %>
+    <div class="ft-flash ft-flash-success" id="flash-notice">
+      <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
+      <button type="button" class="ft-flash-close js-flash-close" aria-label="Dismiss message">&times;</button>
+    </div>
+  <% end %>
+  <% if alert.present? %>
+    <div class="ft-flash ft-flash-danger" id="flash-alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i><%= alert %>
+      <button type="button" class="ft-flash-close js-flash-close" aria-label="Dismiss message">&times;</button>
+    </div>
+  <% end %>
+
+  <main><%= yield %></main>
+
+  <% if user_signed_in? && current_user.employee? %>
+    <%= render "shared/employee_bottom_nav" %>
+  <% end %>
+
+</body>
+</html>

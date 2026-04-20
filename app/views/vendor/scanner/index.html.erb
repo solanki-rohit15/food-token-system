@@ -1,0 +1,93 @@
+<% content_for :title, "QR Scanner — FoodToken" %>
+
+<%# jsQR loaded via CDN — must be available before scanner.js uses window.jsQR %>
+<% content_for :head do %>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<% end %>
+
+<div class="ft-page" id="scanner-page" data-verify-url="<%= vendor_verify_scan_path %>">
+  <div class="ft-scanner-full">
+
+    <div class="ft-camera-view" id="camera-view">
+      <video id="qr-video" autoplay muted playsinline class="ft-camera-video"></video>
+      <canvas id="qr-canvas" class="d-none"></canvas>
+      <div class="ft-scan-overlay">
+        <div class="ft-scan-frame">
+          <div class="ft-corner tl"></div><div class="ft-corner tr"></div>
+          <div class="ft-corner bl"></div><div class="ft-corner br"></div>
+          <div class="ft-scan-line" id="scan-line"></div>
+        </div>
+        <p class="ft-scan-hint text-white mt-3">Scan meal QR or token QR code</p>
+      </div>
+    </div>
+
+    <div class="ft-scanner-manual px-3 py-3">
+      <div class="ft-divider-text mb-2"><span>or enter code manually</span></div>
+      <div class="input-group">
+        <input type="text" id="manual-qr" class="form-control ft-input"
+               placeholder="FT-... (token) or FI-... (item)" autocomplete="off">
+        <button class="btn ft-btn-primary" id="verify-manual-btn">
+          <i class="bi bi-check-circle me-1"></i>Verify
+        </button>
+      </div>
+    </div>
+
+    <div id="scan-result" class="ft-scan-result px-3 pb-4 d-none">
+
+      <div id="result-valid" class="d-none">
+        <div class="ft-result-header ft-result-valid p-3 rounded-top">
+          <div class="ft-result-status-icon">✅</div>
+          <h3 class="text-white mb-0">Valid Token</h3>
+        </div>
+        <div class="ft-vendor-card mt-0 rounded-top-0">
+          <p class="ft-section-label mb-2">Employee</p>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="ft-avatar-lg" id="emp-initials">—</div>
+            <div>
+              <div class="fw-semibold" id="emp-name">—</div>
+              <div class="text-muted small" id="emp-email">—</div>
+              <div class="text-muted small" id="emp-dept">—</div>
+            </div>
+          </div>
+
+          <div id="scanned-item-info" class="d-none mb-3">
+            <p class="ft-section-label mb-1">Scanned Item</p>
+            <span class="badge bg-primary fs-6" id="scanned-item-badge">—</span>
+          </div>
+
+          <p class="ft-section-label mb-2">All Items</p>
+          <div id="token-items" class="d-flex flex-column gap-2 mb-3"></div>
+
+          <div class="d-flex justify-content-between ft-meta-row">
+            <span>Token</span><span id="token-id-disp" class="font-monospace">—</span>
+          </div>
+          <div class="d-flex justify-content-between ft-meta-row">
+            <span>Expires</span><span id="token-expiry">—</span>
+          </div>
+        </div>
+
+        <div class="px-3 mt-3" id="request-buttons-container"></div>
+
+        <div class="px-3 mt-2">
+          <button class="btn ft-btn-outline w-100" id="reset-scanner-btn">
+            <i class="bi bi-arrow-left me-2"></i>Scan Another
+          </button>
+        </div>
+      </div>
+
+      <div id="result-invalid" class="d-none">
+        <div class="ft-result-header ft-result-invalid p-3 rounded">
+          <div class="ft-result-status-icon">❌</div>
+          <h3 class="text-white mb-0">Invalid</h3>
+        </div>
+        <div class="ft-vendor-card mt-3">
+          <p class="text-muted mb-0" id="invalid-message">This code is not valid.</p>
+        </div>
+        <button class="btn ft-btn-primary w-100 mt-3 reset-scanner-btn" id="reset-scanner-btn-2">
+          <i class="bi bi-arrow-left me-2"></i>Try Again
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

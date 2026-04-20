@@ -1,0 +1,69 @@
+<% content_for :title, "Food Categories — Admin" %>
+
+<div class="ft-page pb-5">
+  <div class="ft-page-header px-3 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h2 class="ft-page-title mb-0">Food Categories</h2>
+      <p class="text-muted small mb-0">Select which meal categories are available to employees</p>
+    </div>
+  </div>
+
+  <div class="px-3">
+    <%= form_tag admin_food_items_path, method: :post do %>
+
+      <div class="card ft-card mb-3">
+        <div class="card-header bg-white">
+          <h5 class="mb-0 fw-bold">Active Categories</h5>
+          <p class="text-muted small mb-0">Check all categories that should be visible to employees</p>
+        </div>
+        <div class="card-body">
+          <% @category_items.each do |entry| %>
+            <% cat  = entry[:key]
+               info = entry[:info]
+               item = entry[:item] %>
+
+            <div class="d-flex align-items-center gap-3 py-3 border-bottom">
+              <div class="form-check mb-0">
+                <input type="checkbox"
+                       class="form-check-input"
+                       name="categories[]"
+                       value="<%= cat %>"
+                       id="cat_<%= cat %>"
+                       <%= item&.active? ? "checked" : "" %>>
+              </div>
+              <label class="form-check-label d-flex align-items-center gap-3 flex-fill mb-0 ft-clickable"
+                     for="cat_<%= cat %>">
+                <span class="fs-3"><%= info[:icon] %></span>
+                <div class="flex-fill">
+                  <div class="fw-semibold"><%= info[:label] %></div>
+                  <div class="text-muted small">
+                    <% if item %>
+                      <span class="badge bg-<%= item.active? ? 'success' : 'secondary' %>-subtle text-<%= item.active? ? 'success' : 'secondary' %> border">
+                        <%= item.active? ? "Active" : "Inactive" %>
+                      </span>
+                    <% else %>
+                      <span class="badge bg-secondary-subtle text-secondary border">Not configured</span>
+                    <% end %>
+                  </div>
+                </div>
+                <div class="text-end text-muted small">
+                  <% setting = MealSetting.find_by(meal_type: cat) %>
+                  <% if setting %>
+                    <div><i class="bi bi-clock me-1"></i><%= setting.formatted_time_range %></div>
+                    <div class="fw-semibold text-dark"><%= currency(setting.price) %></div>
+                  <% end %>
+                </div>
+              </label>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <%= submit_tag "Save Categories", class: "btn ft-btn-primary px-4" %>
+        <%= link_to "Manage Timings & Prices", admin_meal_settings_path, class: "btn btn-outline-secondary" %>
+      </div>
+
+    <% end %>
+  </div>
+</div>

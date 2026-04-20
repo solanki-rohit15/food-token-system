@@ -1,0 +1,25 @@
+<% content_for :title, "FoodToken — Workplace Cafeteria System" %>
+
+<div class="auth-body ft-min-full">
+  <div class="ft-auth-container">
+    <div class="ft-auth-card">
+      <div class="ft-auth-header">
+        <div class="ft-auth-logo">🍽️</div>
+        <h1 class="ft-auth-title">FoodToken</h1>
+        <p class="ft-auth-sub">Workplace Cafeteria Management System</p>
+      </div>
+
+      <div class="d-flex flex-column gap-3">
+        <%= link_to new_user_session_path, class: "btn ft-btn-primary w-100 py-3" do %>
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In with Password
+        <% end %>
+      </div>
+
+      <div class="ft-auth-footer mt-4">
+        <p class="text-muted ft-text-xs">
+          <i class="bi bi-shield-lock me-1"></i>Secure · Role-based · Location-verified
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
