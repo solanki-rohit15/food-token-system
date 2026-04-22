@@ -31,6 +31,6 @@ class Order < ApplicationRecord
   end
 
   def token_expiry_time
-    Time.zone.parse("#{Date.current} #{Token::TOKEN_VALID_UNTIL}")
+    Token.expiry_time_for(Date.current)
   end
 end

@@ -1,6 +1,6 @@
 class Vendor::ScannerController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_vendor!
+  before_action :require_vendor!
 
   def index; end
 
@@ -82,9 +82,5 @@ class Vendor::ScannerController < ApplicationController
   def render_json_error(message, extra = {})
     render json: { valid: false, message: message }.merge(extra),
            status: :unprocessable_entity
-  end
-
-  def ensure_vendor!
-    redirect_to root_path, alert: "Access denied." unless current_user.vendor?
   end
 end

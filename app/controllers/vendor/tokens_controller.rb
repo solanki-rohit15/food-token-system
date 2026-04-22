@@ -1,10 +1,10 @@
 class Vendor::TokensController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_vendor!
+  before_action :require_vendor!
   before_action :set_token, only: [:show, :send_redemption_request]
 
   def index
-    @date   = parse_date(params[:date]) || Date.current
+    @date   = safe_parse_date(params[:date]) || Date.current
     @tokens = Token.for_date(@date)
                    .includes(order: [:user, :food_items])
                    .order(created_at: :desc)
@@ -77,13 +77,4 @@ class Vendor::TokensController < ApplicationController
     redirect_to vendor_tokens_path, alert: "Token not found." unless @token
   end
 
-  def parse_date(str)
-    Date.parse(str.to_s)
-  rescue ArgumentError, TypeError
-    nil
-  end
-
-  def ensure_vendor!
-    redirect_to root_path, alert: "Access denied." unless current_user.vendor?
-  end
 end

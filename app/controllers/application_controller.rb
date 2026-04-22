@@ -1,11 +1,8 @@
 class ApplicationController < ActionController::Base
-  include Pundit::Authorization
-
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :enforce_password_change!
 
-  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
   rescue_from ActionController::InvalidAuthenticityToken, with: :handle_invalid_authenticity_token
 
   protected
@@ -16,11 +13,6 @@ class ApplicationController < ActionController::Base
 
   def after_sign_in_path_for(resource)
     resource.must_change_password? ? users_change_password_path : resource.dashboard_path
-  end
-
-  def user_not_authorized
-    flash[:alert] = "You are not authorized to perform this action."
-    redirect_back(fallback_location: root_path)
   end
 
   def handle_invalid_authenticity_token
@@ -104,6 +96,30 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def require_admin!
+    redirect_to root_path, alert: "Access denied." unless current_user&.admin?
+  end
+
+  def require_vendor!
+    redirect_to root_path, alert: "Access denied." unless current_user&.vendor?
+  end
+
+  def require_employee!
+    redirect_to root_path, alert: "Access denied." unless current_user&.employee?
+  end
+
+  def safe_parse_date(value)
+    Date.parse(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
+  def safe_parse_month(value)
+    Date.parse("#{value}-01")
+  rescue ArgumentError, TypeError
+    nil
+  end
 
   def enforce_password_change!
     return unless user_signed_in?

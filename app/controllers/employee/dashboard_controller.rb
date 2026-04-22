@@ -1,6 +1,6 @@
 class Employee::DashboardController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_employee!
+  before_action :require_employee!
   before_action :check_location_access  # ← enforces GPS gate on every load
 
   def index
@@ -19,9 +19,4 @@ class Employee::DashboardController < ApplicationController
     }
   end
 
-  private
-
-  def ensure_employee!
-    redirect_to current_user.dashboard_path, alert: "Access denied." unless current_user.employee?
-  end
 end

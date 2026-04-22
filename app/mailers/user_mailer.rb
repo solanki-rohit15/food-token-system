@@ -9,10 +9,4 @@ class UserMailer < ApplicationMailer
     )
     mail(to: @user.email, subject: "Welcome to FoodToken — Your Login Details")
   end
-
-  def token_ready(user, token)
-    @user  = user
-    @token = token
-    mail(to: @user.email, subject: "Your food token is ready!")
-  end
 end

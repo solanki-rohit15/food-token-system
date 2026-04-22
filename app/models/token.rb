@@ -2,6 +2,7 @@ require "rqrcode"
 
 class Token < ApplicationRecord
   belongs_to :order
+  belongs_to :redeemed_by_user, class_name: "User", foreign_key: :redeemed_by_id, optional: true
   has_many   :redemption_requests, dependent: :destroy
 
   enum :status, { active: 0, redeemed: 1, expired: 2 }
@@ -19,6 +20,11 @@ class Token < ApplicationRecord
   scope :for_user,   ->(user) { joins(:order).where(orders: { user_id: user.id }) }
   scope :by_status,  ->(s) { where(status: s) }
   scope :for_date,   ->(date) { joins(:order).where(orders: { date: date }) }
+  scope :expired_by_time, -> { where("expires_at < ?", Time.current).where.not(status: statuses[:redeemed]) }
+  scope :expired_effective, lambda {
+    where(status: statuses[:expired])
+      .or(where("expires_at < ? AND status != ?", Time.current, statuses[:redeemed]))
+  }
 
   delegate :user, :food_items, :summary, to: :order
 
@@ -57,7 +63,15 @@ class Token < ApplicationRecord
   # Called only by RedemptionRequest after all items finalized
   def redeem!(vendor_user = nil)
     return false if redeemed?
-    update!(status: :redeemed, redeemed_at: Time.current, redeemed_by: vendor_user&.id)
+    update!(status: :redeemed, redeemed_at: Time.current, redeemed_by_id: vendor_user&.id)
+  end
+
+  def self.expire_stale!
+    where(status: :active).where("expires_at < ?", Time.current).update_all(status: statuses[:expired], updated_at: Time.current)
+  end
+
+  def self.expiry_time_for(date)
+    Time.zone.parse("#{date} #{TOKEN_VALID_UNTIL}")
   end
 
   private
@@ -70,6 +84,6 @@ class Token < ApplicationRecord
   end
 
   def set_expiry
-    self.expires_at ||= Time.zone.parse("#{Date.current} #{TOKEN_VALID_UNTIL}")
+    self.expires_at ||= self.class.expiry_time_for(Date.current)
   end
 end

@@ -1,9 +1,9 @@
 class Admin::TokensController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_admin!
+  before_action :require_admin!
 
   def index
-    @date   = parse_date(params[:date]) || Date.current
+    @date   = safe_parse_date(params[:date]) || Date.current
     @tokens = Token.for_date(@date)
                    .includes(order: [:user, { order_items: :food_item },
                                      { food_items: [] }])
@@ -32,15 +32,4 @@ class Admin::TokensController < ApplicationController
     @employee = @order.user
   end
 
-  private
-
-  def parse_date(str)
-    Date.parse(str.to_s)
-  rescue ArgumentError, TypeError
-    nil
-  end
-
-  def ensure_admin!
-    redirect_to root_path, alert: "Access denied." unless current_user.admin?
-  end
 end

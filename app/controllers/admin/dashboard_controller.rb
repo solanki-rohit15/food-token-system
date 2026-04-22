@@ -1,6 +1,6 @@
 class Admin::DashboardController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_admin!
+  before_action :require_admin!
 
   def index
     @stats = {
@@ -18,30 +18,33 @@ class Admin::DashboardController < ApplicationController
                           .order(created_at: :desc)
                           .limit(10)
 
+    meal_counts = OrderItem.joins(:food_item, order: :token)
+                           .where(orders: { date: Date.current })
+                           .group("food_items.category")
+                           .count
+
     @meal_breakdown = FoodItem::CATEGORIES.map do |cat, info|
       {
         category: cat,
         label:    info[:label],
         icon:     info[:icon],
-        count:    OrderItem.joins(:food_item, order: :token)
-                           .where(food_items: { category: cat.to_s })
-                           .where(orders: { date: Date.current })
-                           .count
+        count:    meal_counts[cat.to_s].to_i
       }
     end
 
-    @weekly_data = (6.days.ago.to_date..Date.current).map do |date|
+    weekly_range = 6.days.ago.to_date..Date.current
+    order_counts = Order.where(date: weekly_range).group(:date).count
+    redeemed_counts = Token.joins(:order)
+                           .where(orders: { date: weekly_range }, status: :redeemed)
+                           .group("orders.date")
+                           .count
+
+    @weekly_data = weekly_range.map do |date|
       {
         date:     date.strftime("%a"),
-        orders:   Order.for_date(date).count,
-        redeemed: Token.for_date(date).redeemed.count
+        orders:   order_counts[date].to_i,
+        redeemed: redeemed_counts[date].to_i
       }
     end
-  end
-
-  private
-
-  def ensure_admin!
-    redirect_to root_path, alert: "Access denied." unless current_user.admin?
   end
 end

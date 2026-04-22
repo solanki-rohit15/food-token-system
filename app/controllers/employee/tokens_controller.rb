@@ -1,6 +1,6 @@
 class Employee::TokensController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_employee!
+  before_action :require_employee!
   before_action :set_token, only: [:show, :status]
   before_action :check_location_access
   
@@ -11,8 +11,18 @@ class Employee::TokensController < ApplicationController
                    .order(created_at: :desc)
                    .page(params[:page]).per(10)
 
+    order_ids = @tokens.map(&:order_id)
+    @redeemed_item_counts = if order_ids.any?
+                              OrderItem.where(order_id: order_ids)
+                                       .where.not(redeemed_at: nil)
+                                       .group(:order_id)
+                                       .count
+                            else
+                              {}
+                            end
+
     # Find today's active/partially redeemed token for the banner
-    @active_token = @tokens.find { |t| t.active? || t.partially_redeemed? }
+    @active_token = @tokens.detect { |t| t.active? || t.partially_redeemed? }
   end
 
   def show
@@ -71,9 +81,5 @@ class Employee::TokensController < ApplicationController
                                                     { redemption_requests: :vendor }] })
                   .find_by(id: params[:id])
     redirect_to employee_tokens_path, alert: "Token not found." unless @token
-  end
-
-  def ensure_employee!
-    redirect_to root_path, alert: "Access denied." unless current_user.employee?
   end
 end

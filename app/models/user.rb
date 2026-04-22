@@ -32,6 +32,14 @@ class User < ApplicationRecord
     encrypted_password.blank? && provider.blank?
   end
 
+  def active_for_authentication?
+    super && active?
+  end
+
+  def inactive_message
+    active? ? super : :inactive
+  end
+
   # ── Helpers ───────────────────────────────────────────────────────
   def initials
     name.split.map(&:first).first(2).join.upcase

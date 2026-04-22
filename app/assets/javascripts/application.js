@@ -3,6 +3,7 @@
 //= require location
 //= require app_ui
 //= require scanner
+//= require bootstrap 
 
 // Flash auto-dismiss and clock (non-GPS UI)
 document.addEventListener("DOMContentLoaded", function () {

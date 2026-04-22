@@ -49,14 +49,11 @@ class RedemptionRequest < ApplicationRecord
 
   # Flip the parent token to :redeemed only when every item is done.
   def check_and_finalize_token!
-    order = token.order
-    all_items = order.order_items.reload
-
-    if all_items.all?(&:redeemed?)
+    if token.order.order_items.where(redeemed_at: nil).none?
       token.update!(
         status:      :redeemed,
         redeemed_at: Time.current,
-        redeemed_by: vendor.id
+        redeemed_by_id: vendor.id
       )
     end
   end

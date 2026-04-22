@@ -1,54 +1,80 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
+  # Code is not reloaded between requests
   config.enable_reloading = false
   config.eager_load = true
+
+  # Full error reports are disabled
   config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
-  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
+
+  # Serve static files
+  config.public_file_server.enabled = true
+  config.public_file_server.headers = {
+    "Cache-Control" => "public, max-age=#{1.year.to_i}"
+  }
+
+  # Assets
+  config.assets.compile = false
+
+  # Active Storage (TEMP: local — use S3 later)
   config.active_storage.service = :local
 
-  # Enforce SSL in production
-  config.assume_ssl  = true
-  config.force_ssl   = true
-  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Force SSL (Render supports HTTPS)
+  config.force_ssl = true
 
-  config.log_tags = [ :request_id ]
-  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
+  # Logging
+  config.log_tags = [:request_id]
+  config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+
+  # Health check endpoint
   config.silence_healthcheck_path = "/up"
+
+  # Disable deprecation logs
   config.active_support.report_deprecations = false
 
-  config.cache_store    = :solid_cache_store
-  config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
+  # Cache (simple & safe)
+  config.cache_store = :memory_store
 
+  # Background jobs (safe default)
+  config.active_job.queue_adapter = :async
+
+  # Action Mailer
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options   = {
-    host:     ENV.fetch("APP_HOST", "example.com"),
+  config.action_mailer.perform_caching = false
+
+  config.action_mailer.default_url_options = {
+    host: ENV["APP_HOST"],
     protocol: "https"
   }
+
   config.action_mailer.delivery_method = :smtp
+
   config.action_mailer.smtp_settings = {
-    address:              ENV.fetch("SMTP_HOST",     "smtp.gmail.com"),
-    port:                 ENV.fetch("SMTP_PORT",     587).to_i,
-    domain:               ENV.fetch("SMTP_DOMAIN",   "gmail.com"),
-    user_name:            ENV.fetch("SMTP_USER",     ""),
-    password:             ENV.fetch("SMTP_PASSWORD", ""),
+    address:              ENV["SMTP_HOST"],
+    port:                 ENV["SMTP_PORT"].to_i,
+    domain:               ENV["SMTP_DOMAIN"],
+    user_name:            ENV["SMTP_USER"],
+    password:             ENV["SMTP_PASSWORD"],
     authentication:       :plain,
     enable_starttls_auto: true,
     openssl_verify_mode:  OpenSSL::SSL::VERIFY_PEER
   }
 
+  # I18n fallbacks
   config.i18n.fallbacks = true
-  config.active_record.dump_schema_after_migration = false
-  config.active_record.attributes_for_inspect      = [ :id ]
 
-  # Host whitelist — set APP_HOST in your environment
+  # Active Record
+  config.active_record.dump_schema_after_migration = false
+  config.active_record.attributes_for_inspect = [:id]
+
+  # Host protection
   config.hosts = [
-    ENV.fetch("APP_HOST", nil),
+    ENV["APP_HOST"],
+    /.*\.onrender\.com/,
     /.*\.fly\.dev/,
-    /.*\.railway\.app/,
-    /.*\.render\.com/
+    /.*\.railway\.app/
   ].compact
 end

@@ -2,8 +2,7 @@ class Employee::FoodSelectionsController < ApplicationController
   before_action :authenticate_user!
   before_action :ensure_employee!
   before_action :check_location_access
-  # before_action :ensure_inside_office!, only: [:create]   # ✅ ADD THIS
-# before_action :ensure_inside_office!, if: current_user.employee?
+
 
   def new
     if current_user.ordered_today?

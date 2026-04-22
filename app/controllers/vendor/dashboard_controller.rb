@@ -1,19 +1,19 @@
 class Vendor::DashboardController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_vendor!
+  before_action :require_vendor!
 
   def index
     @view_mode = params[:view].presence_in(%w[daily monthly]) || "daily"
 
     if @view_mode == "monthly"
-      @month      = parse_month(params[:month]) || Date.current.beginning_of_month
+      @month      = safe_parse_month(params[:month]) || Date.current.beginning_of_month
       @end_month  = @month.end_of_month
       @date_range = @month..[@end_month, Date.current].min
 
       @monthly_summary  = category_redemption_summary(@date_range)
       @daily_breakdown  = build_daily_breakdown(@month, @end_month)
     else
-      @date            = parse_date(params[:date]) || Date.current
+      @date            = safe_parse_date(params[:date]) || Date.current
       @today_tokens    = Token.for_date(@date).includes(order: [:user, :food_items])
       @redeemed_tokens = @today_tokens.redeemed
       @meal_summary    = category_redemption_summary(@date..@date, redeemed_only: true)
@@ -23,7 +23,7 @@ class Vendor::DashboardController < ApplicationController
         total_selected: @today_tokens.count,
         redeemed:       @redeemed_tokens.count,
         unredeemed:     @today_tokens.active.count,
-        expired:        @today_tokens.expired.count,
+        expired:        @today_tokens.expired_effective.count,
         total_amount:   @meal_summary.values.sum { |v| v[:amount] }
       }
     end
@@ -63,19 +63,4 @@ class Vendor::DashboardController < ApplicationController
     end.reverse
   end
 
-  def parse_date(str)
-    Date.parse(str.to_s)
-  rescue ArgumentError, TypeError
-    nil
-  end
-
-  def parse_month(str)
-    Date.parse("#{str}-01")
-  rescue ArgumentError, TypeError
-    nil
-  end
-
-  def ensure_vendor!
-    redirect_to root_path, alert: "Access denied." unless current_user.vendor?
-  end
 end
