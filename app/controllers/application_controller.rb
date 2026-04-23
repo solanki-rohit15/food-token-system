@@ -42,8 +42,6 @@ class ApplicationController < ActionController::Base
   #   D) coords stale (> 30 min)    → clear session, pass through for re-fetch
   #   E) coords present + fresh     → Haversine check → allow or sign out
   # ─────────────────────────────────────────────────────────────────
-  GPS_GRACE_SECONDS = 30  # seconds to wait for browser GPS permission dialog
-
   def check_location_access
     setting = LocationSetting.gps_setting
 
@@ -71,10 +69,8 @@ class ApplicationController < ActionController::Base
     end
 
     # C: GPS denied/unavailable — stamp exists but coords nil
-    #    Give GPS_GRACE_SECONDS for the permission dialog to be answered
+    #    Deny immediately; employees must provide location to continue.
     if lat.blank? || lng.blank?
-      return if elapsed < GPS_GRACE_SECONDS
-      # Employee denied GPS — log them out
       sign_out(current_user)
       redirect_to new_user_session_path,
                   alert: "Location permission is required. Please enable GPS and sign in again."

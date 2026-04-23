@@ -43,27 +43,64 @@ class Admin::ReportsController < ApplicationController
   end
 
   def export
-    @date   = _date(params[:date]) || Date.current
+    @date   = safe_parse_date(params[:date]) || Date.current
     @tokens = Token.for_date(@date).includes(order: [:user, :food_items])
 
-    csv = CSV.generate(headers: true) do |row|
-      row << ["Date", "Employee", "Email", "Department",
-              "Categories", "Token Number", "Status", "Redeemed At"]
-      @tokens.each do |t|
-        row << [
-          t.order.date,
-          t.user.name,
-          t.user.email,
-          t.user.employee_profile&.department,
-          t.food_items.map(&:category_label).join(", "),
-          t.token_number,
-          t.status,
-          t.redeemed_at&.strftime("%H:%M")
+    send_data daily_csv(@tokens),
+              filename: "report_daily_#{@date}.csv",
+              type: "text/csv; charset=utf-8",
+              disposition: "attachment"
+  end
+
+  def export_monthly
+    @month     = safe_parse_month(params[:month]) || Date.current.beginning_of_month
+    @end_month = @month.end_of_month
+    @orders    = Order.where(date: @month..@end_month)
+                      .includes(:user, :token, :food_items)
+                      .order(date: :asc, created_at: :asc)
+
+    send_data monthly_csv(@orders),
+              filename: "report_monthly_#{@month.strftime('%Y_%m')}.csv",
+              type: "text/csv; charset=utf-8",
+              disposition: "attachment"
+  end
+
+  private
+
+  def daily_csv(tokens)
+    CSV.generate(headers: true) do |csv|
+      csv << ["Date", "Employee", "Email", "Department", "Categories", "Token Number", "Status", "Redeemed At"]
+      tokens.each do |token|
+        csv << [
+          token.order&.date,
+          token.user&.name,
+          token.user&.email,
+          token.user&.employee_profile&.department,
+          token.food_items.map(&:category_label).join(", "),
+          token.token_number,
+          token.status,
+          token.redeemed_at&.strftime("%I:%M %p")
         ]
       end
     end
-
-    send_data csv, filename: "report_#{@date}.csv", type: "text/csv"
   end
 
+  def monthly_csv(orders)
+    CSV.generate(headers: true) do |csv|
+      csv << ["Date", "Employee", "Email", "Department", "Categories", "Token Number", "Token Status", "Redeemed At"]
+      orders.each do |order|
+        token = order.token
+        csv << [
+          order.date,
+          order.user&.name,
+          order.user&.email,
+          order.user&.employee_profile&.department,
+          order.food_items.map(&:category_label).join(", "),
+          token&.token_number,
+          token&.status,
+          token&.redeemed_at&.strftime("%I:%M %p")
+        ]
+      end
+    end
+  end
 end

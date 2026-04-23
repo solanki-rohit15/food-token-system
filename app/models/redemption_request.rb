@@ -19,18 +19,21 @@ class RedemptionRequest < ApplicationRecord
   # every single order_item under that order has been redeemed.
   # ──────────────────────────────────────────────────────────────────
   def approve!
-    return false unless pending?
+    with_lock do
+      return true if approved?
+      return false if rejected?
 
-    ActiveRecord::Base.transaction do
-      # 1. Redeem the specific order_item
-      order_item.redeem!(vendor)
+      ActiveRecord::Base.transaction do
+        # 1. Redeem the specific order_item
+        order_item.redeem!(vendor)
 
-      # 2. Mark this request as approved
-      update!(status: :approved, responded_at: Time.current)
+        # 2. Mark this request as approved
+        update!(status: :approved, responded_at: (responded_at || Time.current))
 
-      # 3. If ALL order_items under this token's order are now redeemed,
-      #    flip the token status to :redeemed as well.
-      check_and_finalize_token!
+        # 3. If ALL order_items under this token's order are now redeemed,
+        #    flip the token status to :redeemed as well.
+        check_and_finalize_token!
+      end
     end
 
     true
@@ -40,9 +43,13 @@ class RedemptionRequest < ApplicationRecord
   end
 
   def reject!
-    return false unless pending?
-    update!(status: :rejected, responded_at: Time.current)
-    true
+    with_lock do
+      return true if rejected?
+      return false if approved?
+
+      update!(status: :rejected, responded_at: (responded_at || Time.current))
+      true
+    end
   end
 
   private

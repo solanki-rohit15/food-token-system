@@ -91,6 +91,7 @@ Rails.application.routes.draw do
         get :monthly
         get :employee_wise
         get :export
+        get :export_monthly
       end
     end
   end
