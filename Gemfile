@@ -16,8 +16,6 @@ gem "devise"
 gem "omniauth-google-oauth2"
 gem "omniauth-rails_csrf_protection"
 
-# Authorization
-gem "pundit", "~> 2.3"
 
 # QR Code generation (SVG — no chunky_png needed)
 gem "rqrcode"
@@ -35,7 +33,7 @@ gem "font-awesome-sass", "~> 6.5"
 
 
 # Env vars
-gem "dotenv-rails", "~> 3.2"
+gem 'dotenv-rails', groups: [:development, :test]
 
 # Mailer OAuth SSL fix
 gem "faraday",          "~> 2.9"
