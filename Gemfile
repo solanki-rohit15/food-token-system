@@ -4,6 +4,8 @@ gem "rails",          "~> 8.1.3"                         # Modern asset pipeline
 gem "pg",             "~> 1.1"          # PostgreSQL
 gem "puma",           ">= 5.0"          # Web server
 
+gem "image_processing", "~> 1.2"
+
 # Hotwire / Turbo
 
 gem "turbo-rails"

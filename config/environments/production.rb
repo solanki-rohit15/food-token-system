@@ -70,11 +70,15 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
   config.active_record.attributes_for_inspect = [:id]
 
-  # Host protection
-  config.hosts = [
-    ENV["APP_HOST"],
-    /.*\.onrender\.com/,
-    /.*\.fly\.dev/,
-    /.*\.railway\.app/
-  ].compact
+config.hosts.clear
+
+config.hosts << "localhost"
+config.hosts << "127.0.0.1"
+config.hosts << "0.0.0.0"
+
+# production domains
+config.hosts << ENV["APP_HOST"] if ENV["APP_HOST"].present?
+config.hosts << /.*\.onrender\.com/
+config.hosts << /.*\.fly\.dev/
+config.hosts << /.*\.railway\.app/
 end
