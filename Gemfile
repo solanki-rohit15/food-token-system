@@ -1,7 +1,6 @@
 source "https://rubygems.org"
 
-gem "rails",          "~> 8.1.3"
-gem "propshaft"                         # Modern asset pipeline
+gem "rails",          "~> 8.1.3"                         # Modern asset pipeline
 gem "pg",             "~> 1.1"          # PostgreSQL
 gem "puma",           ">= 5.0"          # Web server
 
