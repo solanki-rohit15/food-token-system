@@ -50,18 +50,21 @@ Rails.application.configure do
     protocol: "https"
   }
 
+if ENV["SMTP_HOST"].present?
   config.action_mailer.delivery_method = :smtp
-
   config.action_mailer.smtp_settings = {
     address:              ENV["SMTP_HOST"],
-    port:                 ENV["SMTP_PORT"].to_i,
-    domain:               ENV["SMTP_DOMAIN"],
+    port:                 ENV.fetch("SMTP_PORT", "587").to_i,
+    domain:               ENV.fetch("SMTP_DOMAIN", ENV.fetch("APP_HOST", "localhost")),
     user_name:            ENV["SMTP_USER"],
     password:             ENV["SMTP_PASSWORD"],
     authentication:       :plain,
     enable_starttls_auto: true,
     openssl_verify_mode:  OpenSSL::SSL::VERIFY_PEER
   }
+else
+  config.action_mailer.delivery_method = :test  # safe fallback
+end
 
   # I18n fallbacks
   config.i18n.fallbacks = true
@@ -69,6 +72,12 @@ Rails.application.configure do
   # Active Record
   config.active_record.dump_schema_after_migration = false
   config.active_record.attributes_for_inspect = [:id]
+
+  # config/environments/production.rb
+# ADD this block — allows bypassing credentials entirely via env var
+if ENV["SECRET_KEY_BASE"].present?
+  config.secret_key_base = ENV["SECRET_KEY_BASE"]
+end
 
 config.hosts.clear
 

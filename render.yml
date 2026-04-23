@@ -1,0 +1,12 @@
+# render.yaml
+   services:
+     - type: web
+       name: food-token-system
+       env: ruby
+       buildCommand: "./bin/render-build.sh"
+       startCommand: "bundle exec rails server"
+       envVars:
+         - key: RAILS_MASTER_KEY
+           sync: false
+         - key: SECRET_KEY_BASE
+           generateValue: true
