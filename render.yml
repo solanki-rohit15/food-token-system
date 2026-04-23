@@ -1,12 +1,17 @@
-# render.yaml
-   services:
-     - type: web
-       name: food-token-system
-       env: ruby
-       buildCommand: "./bin/render-build.sh"
-       startCommand: "bundle exec rails server"
-       envVars:
-         - key: RAILS_MASTER_KEY
-           sync: false
-         - key: SECRET_KEY_BASE
-           generateValue: true
+services:
+  - type: web
+    name: food-token-system
+    runtime: ruby
+    buildCommand: "./bin/render-build.sh"
+    startCommand: "bundle exec puma -C config/puma.rb"
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: BUNDLE_WITHOUT
+        value: "development:test"
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      - key: RAILS_LOG_TO_STDOUT
+        value: "enabled"
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
