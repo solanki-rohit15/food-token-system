@@ -23,6 +23,8 @@ class User < ApplicationRecord
 
   before_create :set_defaults
 
+  include Rails.application.routes.url_helpers
+
   # ── First-login password change ────────────────────────────────────
   def must_change_password?
     must_change_password
@@ -45,12 +47,13 @@ class User < ApplicationRecord
     name.split.map(&:first).first(2).join.upcase
   end
 
+
   def dashboard_path
     case role
-    when "admin"    then Rails.application.routes.url_helpers.admin_root_path
-    when "vendor"   then Rails.application.routes.url_helpers.vendor_root_path
-    when "employee" then Rails.application.routes.url_helpers.employee_root_path
-    else                 Rails.application.routes.url_helpers.root_path
+    when "admin"    then admin_root_path
+    when "vendor"   then vendor_root_path
+    when "employee" then employee_root_path
+    else                 root_path
     end
   end
 

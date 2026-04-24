@@ -1,13 +1,12 @@
 class Admin::LocationSettingsController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_admin!
+  before_action :require_admin!
+  before_action :load_setting
 
-  def index
-    @setting = LocationSetting.gps_setting
-  end
+  def index; end
 
   def update
-    @setting = LocationSetting.gps_setting
+    # Permit the attributes
     attrs = params.require(:location_setting)
                   .permit(:name, :enabled, :latitude, :longitude, :radius_meters)
 
@@ -15,16 +14,27 @@ class Admin::LocationSettingsController < ApplicationController
     attrs[:enabled] = attrs[:enabled].to_s == "1"
 
     if @setting.update(attrs)
-      redirect_to admin_location_settings_path, notice: "Location settings saved."
+      render json: {
+        success: true,
+        message: "Location settings saved.",
+        setting: {
+          enabled: @setting.enabled?,
+          name: @setting.name,
+          latitude: @setting.latitude,
+          longitude: @setting.longitude,
+          radius_meters: @setting.radius_meters
+        }
+      }
     else
-      flash.now[:alert] = @setting.errors.full_messages.join(", ")
-      render :index, status: :unprocessable_entity
+      error_message = @setting.errors.full_messages.join(", ")
+      render json: { success: false, message: error_message }, status: :unprocessable_entity
     end
   end
 
   private
 
-  def ensure_admin!
-    redirect_to root_path unless current_user.admin?
+  # Load the GPS setting
+  def load_setting
+    @setting = LocationSetting.gps_setting
   end
 end

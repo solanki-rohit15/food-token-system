@@ -1,7 +1,7 @@
 /**
  * app_ui.js — All non-GPS UI interactions
  *
- * Replaces ALL inline <script> blocks from views:
+ * 
  *   - Password toggle + match indicator
  *   - Meal selection checkbox → button enable
  *   - Token status polling (employee token show page)
@@ -11,7 +11,58 @@
  */
 
 
-$(document).on('turbo:load DOMContentLoaded', function () {
+function initAppUi() {
+  if (window.__appUiInitialized) return
+  window.__appUiInitialized = true
+
+  const csrfToken = $('meta[name="csrf-token"]').attr('content')
+
+  function showFlash(type, message) {
+    if (!message) return
+
+    $('.ft-flash').remove()
+
+    const isError = type === 'error'
+    const flash = $('<div>', {
+      class: `ft-flash ${isError ? 'ft-flash-danger' : 'ft-flash-success'}`
+    })
+    const icon = $('<i>', { class: isError ? 'bi bi-exclamation-triangle-fill me-2' : 'bi bi-check-circle-fill me-2' })
+    const closeBtn = $('<button>', {
+      type: 'button',
+      class: 'ft-flash-close js-flash-close',
+      'aria-label': 'Dismiss message'
+    }).text('×')
+
+    flash.append(icon).append(document.createTextNode(message)).append(closeBtn)
+    $('body').prepend(flash)
+    setTimeout(() => flash.fadeOut(500, function () { $(this).remove() }), 5000)
+  }
+
+  async function submitWithFetch(formEl) {
+    const action = formEl.getAttribute('action')
+    const methodInput = formEl.querySelector('input[name="_method"]')
+    const method = (methodInput ? methodInput.value : formEl.getAttribute('method') || 'POST').toUpperCase()
+    const formData = new FormData(formEl)
+
+    const response = await fetch(action, {
+      method,
+      headers: {
+        'X-CSRF-Token': csrfToken,
+        'Accept': 'application/json'
+      },
+      body: formData,
+      credentials: 'same-origin'
+    })
+
+    let data = {}
+    try {
+      data = await response.json()
+    } catch (_error) {
+      data = { success: false, message: 'Unexpected response from server.' }
+    }
+
+    return { ok: response.ok, data }
+  }
 
   // ── Flash auto-dismiss (5s) ───────────────────────────────────────
   setTimeout(() => $('.ft-flash').fadeOut(500, function () { $(this).remove() }), 5000)
@@ -134,4 +185,73 @@ $(document).on('turbo:load DOMContentLoaded', function () {
     container.append(icon).append(document.createTextNode(`Waiting for employee to approve ${label}`))
     btn.replaceWith(container)
   }
-})
+
+  // ── Admin fetch forms/actions (no full page reload) ───────────────
+  async function handleAjaxFormSubmit(formEl, event) {
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    const submitBtn = formEl.querySelector('button[type="submit"], input[type="submit"]')
+    const confirmMessage = formEl.getAttribute('data-confirm') || (submitBtn ? submitBtn.getAttribute('data-confirm') : null)
+    if (confirmMessage && !window.confirm(confirmMessage)) return
+
+    if (submitBtn) submitBtn.disabled = true
+
+    try {
+      const { ok, data } = await submitWithFetch(formEl)
+
+      if (!ok || data.success === false) {
+        showFlash('error', data.message || 'Action failed.')
+        return
+      }
+
+      if ($(formEl).hasClass('js-user-toggle-form')) {
+        const btn = $(formEl).find('.js-user-toggle-btn')
+        const statusCell = $(`#user_status_${data.id}`)
+        if (statusCell.length) {
+          statusCell.html(data.active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>')
+        }
+        if (btn.length) {
+          btn.text(data.active ? 'Deactivate' : 'Activate')
+          btn.removeClass('btn-outline-warning btn-outline-success')
+          btn.addClass(data.active ? 'btn-outline-warning' : 'btn-outline-success')
+        }
+      } else if ($(formEl).hasClass('js-user-delete-form')) {
+        $(`#user_row_${data.id}`).fadeOut(200, function () { $(this).remove() })
+      } else if ($(formEl).hasClass('js-user-show-toggle-form')) {
+        const btn = $(formEl).find('.js-user-show-toggle-btn')
+        const badgeWrap = $(`#user_show_status_badge_${data.id}`)
+        if (badgeWrap.length) {
+          badgeWrap.html(data.active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>')
+        }
+        if (btn.length) {
+          btn.text(data.active ? 'Deactivate' : 'Activate')
+          btn.removeClass('btn-outline-warning btn-outline-success')
+          btn.addClass(data.active ? 'btn-outline-warning' : 'btn-outline-success')
+        }
+      }
+
+      showFlash('success', data.message || 'Saved successfully.')
+    } catch (_error) {
+      showFlash('error', 'Network error. Please try again.')
+    } finally {
+      if (submitBtn) submitBtn.disabled = false
+    }
+  }
+
+  document.addEventListener('submit', function (event) {
+    const formEl = event.target
+    if (!(formEl instanceof HTMLFormElement)) return
+    if (!formEl.matches('.js-fetch-form[data-ajax="true"]')) return
+    handleAjaxFormSubmit(formEl, event)
+  }, true)
+
+  window.handleAjaxFormSubmit = function (event, formEl) {
+    handleAjaxFormSubmit(formEl, event)
+    return false
+  }
+}
+
+$(initAppUi)
+$(document).on('turbo:load', initAppUi)

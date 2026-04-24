@@ -21,3 +21,21 @@ document.addEventListener("DOMContentLoaded", function () {
     setInterval(updateClock, 30000);
   }
 });
+
+function toggleItem(id) {
+  fetch(`/admin/food_items/${id}/toggle_active`, {
+    method: "PATCH",
+    headers: {
+      "X-CSRF-Token": document.querySelector("[name=csrf-token]").content,
+      "Content-Type": "application/json"
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    const el = document.getElementById(`food_item_${data.id}`)
+    el.classList.toggle("inactive", !data.active)
+  })
+}
+
+// global banana zaroori hai (important)
+window.toggleItem = toggleItem

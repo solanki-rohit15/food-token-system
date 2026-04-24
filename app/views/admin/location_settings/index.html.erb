@@ -15,7 +15,11 @@
       </div>
     </div>
 
-    <%= form_tag admin_location_settings_path, method: :patch do %>
+    <%= form_tag admin_location_settings_path,
+                 method: :patch,
+                 class: "js-fetch-form",
+                 data: { ajax: "true", turbo: "false" },
+                 onsubmit: "return window.handleAjaxFormSubmit(event, this);" do %>
       <div class="card ft-card mb-4">
         <div class="card-header bg-white">
           <h5 class="mb-0 fw-bold"><i class="bi bi-geo-alt-fill me-2 text-danger"></i>GPS Restriction</h5>

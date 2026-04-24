@@ -20,13 +20,9 @@ class FoodItem < ApplicationRecord
   # ⚠️ Avoid using Ruby select in scopes for large data
   scope :available_now, -> { active } # filter later if needed
 
-  # ✅ FINAL LOGIC (correct + safe)
   def available_now?(time = Time.current)
     return false unless active?
-
-    setting = MealSetting.find_by(meal_type: category)
-
-    # 👉 fallback if no setting
+    setting = meal_setting  # uses the memoized @meal_setting
     return default_available?(time) unless setting&.start_time && setting&.end_time
 
     now = time.in_time_zone

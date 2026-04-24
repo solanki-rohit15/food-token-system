@@ -1,64 +1,68 @@
 class Admin::MealSettingsController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_admin!
+  before_action :require_admin!
 
   def index
-    @settings = MealSetting::MEAL_TYPES.map do |mt|
-      MealSetting.find_or_initialize_for(mt)
-    end
+    @settings = MealSetting.order(:meal_type)
   end
 
   def update
-    errors = []
-
-    ActiveRecord::Base.transaction do
-      (params[:meal_settings] || {}).each do |mt, attrs|
-        next unless MealSetting::MEAL_TYPES.include?(mt)
-
-        setting = MealSetting.find_or_initialize_for(mt)
-
-        # ✅ SAFE TIME PARSING (IMPORTANT)
-        start_time = parse_time(attrs[:start_time])
-        end_time   = parse_time(attrs[:end_time])
-
-        setting.start_time = start_time if start_time
-        setting.end_time   = end_time   if end_time
-        setting.price      = attrs[:price].to_f
-
-        unless setting.save
-          errors << "#{mt.humanize}: #{setting.errors.full_messages.join(', ')}"
-        end
-      end
-
-      # ❗ Rollback manually if any errors
-      raise ActiveRecord::Rollback if errors.any?
-    end
+    settings_to_save = build_settings_from_params
+    errors           = collect_validation_errors(settings_to_save)
 
     if errors.empty?
-      redirect_to admin_meal_settings_path, notice: "Meal settings updated successfully ✅"
-    else
-      @settings = MealSetting::MEAL_TYPES.map do |mt|
-        MealSetting.find_or_initialize_for(mt)
+      ActiveRecord::Base.transaction do
+        settings_to_save.each(&:save!)
       end
-
-      flash.now[:alert] = errors.join("; ")
-      render :index, status: :unprocessable_entity
+      render json: {
+        success: true,
+        message: "Meal settings updated.",
+        settings: settings_to_save.map do |setting|
+          {
+            meal_type: setting.meal_type,
+            start_time: setting.start_time&.strftime("%H:%M"),
+            end_time: setting.end_time&.strftime("%H:%M"),
+            price: setting.price.to_f
+          }
+        end
+      }
+    else
+      render json: { success: false, message: errors.to_sentence }, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { success: false, message: e.message }, status: :unprocessable_entity
   end
 
   private
 
-  # ✅ CENTRALIZED TIME PARSER
+  def build_settings_from_params
+    meal_settings_params.to_h.filter_map do |mt, attrs|
+      next unless MealSetting::MEAL_TYPES.include?(mt)
+  
+      setting = MealSetting.find_by!(meal_type: mt)
+  
+      setting.start_time = parse_time(attrs[:start_time]) || setting.start_time
+      setting.end_time   = parse_time(attrs[:end_time])   || setting.end_time
+      setting.price      = attrs[:price].to_f
+  
+      setting
+    end
+  end
+  
+  def meal_settings_params
+    params.require(:meal_settings).permit!
+  end
+
+  def collect_validation_errors(settings)
+    settings.reject(&:valid?).flat_map do |s|
+      s.errors.full_messages.map { |msg| "#{s.meal_type.humanize}: #{msg}" }
+    end
+  end
+
   def parse_time(value)
     return nil if value.blank?
-
-    # Ensures correct timezone + avoids invalid formats
     Time.zone.parse(value)
   rescue ArgumentError
     nil
-  end
-
-  def ensure_admin!
-    redirect_to root_path, alert: "Access denied." unless current_user.admin?
   end
 end

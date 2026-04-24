@@ -4,22 +4,9 @@ class Admin::TokensController < ApplicationController
 
   def index
     @date   = safe_parse_date(params[:date]) || Date.current
-    @tokens = Token.for_date(@date)
-                   .includes(order: [:user, { order_items: :food_item },
-                                     { food_items: [] }])
-                   .order(created_at: :desc)
-
-    if params[:status].present?
-      @tokens = @tokens.where(status: params[:status])
-    end
-
-    if params[:search].present?
-      q = "%#{params[:search]}%"
-      @tokens = @tokens.joins(order: :user)
-                       .where("users.name ILIKE ? OR users.email ILIKE ? OR tokens.token_number ILIKE ?",
-                              q, q, q)
-    end
-
+    @tokens = base_tokens_scope
+    @tokens = @tokens.where(status: params[:status]) if params[:status].present?
+    @tokens = apply_search(@tokens)                  if params[:search].present?
     @tokens = @tokens.page(params[:page]).per(25)
   end
 
@@ -32,4 +19,17 @@ class Admin::TokensController < ApplicationController
     @employee = @order.user
   end
 
+  private
+
+  def base_tokens_scope
+    Token.for_date(@date)
+         .includes(order: [:user, { order_items: :food_item }, :food_items])
+         .order(created_at: :desc)
+  end
+
+  def apply_search(scope)
+    q = "%#{params[:search]}%"
+    scope.joins(order: :user)
+         .where("users.name ILIKE ? OR users.email ILIKE ? OR tokens.token_number ILIKE ?", q, q, q)
+  end
 end

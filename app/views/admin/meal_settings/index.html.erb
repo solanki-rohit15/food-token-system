@@ -7,7 +7,11 @@
   </div>
 
   <div class="px-3">
-    <%= form_tag admin_meal_settings_path, method: :patch do %>
+    <%= form_tag admin_meal_settings_path,
+                 method: :patch,
+                 class: "js-fetch-form",
+                 data: { ajax: "true", turbo: "false" },
+                 onsubmit: "return window.handleAjaxFormSubmit(event, this);" do %>
 
       <div class="card ft-card mb-3">
         <div class="card-body p-0">

@@ -1,48 +1,26 @@
 class Employee::FoodSelectionsController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_employee!
+  before_action :require_employee!
   before_action :check_location_access
-
+  before_action :redirect_if_already_ordered, only: [:new, :create]
 
   def new
-    if current_user.ordered_today?
-      redirect_to employee_tokens_path, notice: "You already have an order for today."
-      return
-    end
-
-    @meal_settings = MealSetting.all.index_by(&:meal_type)
+    @meal_settings     = MealSetting.all.index_by(&:meal_type)
     @active_categories = FoodItem.active.ordered.index_by(&:category)
   end
 
   def create
-    if current_user.ordered_today?
-      redirect_to employee_tokens_path, alert: "You already have an order for today."
-      return
-    end
-
-    selected_categories = Array(params[:categories]).map(&:to_s).uniq
-                                                    .select { |c| FoodItem::CATEGORIES.key?(c) }
+    selected_categories = Array(params[:categories])
+                            .map(&:to_s)
+                            .uniq
+                            .select { |c| FoodItem::CATEGORIES.key?(c) }
 
     if selected_categories.blank?
       redirect_to new_employee_food_selection_path, alert: "Please select at least one meal."
       return
     end
 
-    token = nil
-
-    ActiveRecord::Base.transaction do
-      order = current_user.orders.create!(date: Date.current)
-
-      valid_items = FoodItem.active.where(category: selected_categories).select(&:available_now?)
-
-      if valid_items.empty?
-        raise ActiveRecord::Rollback, "No valid/available categories selected"
-      end
-
-      valid_items.each { |item| order.order_items.create!(food_item: item) }
-
-      token = order.generate_token!
-    end
+    token = place_order(selected_categories)
 
     if token
       redirect_to employee_token_path(token), notice: "Your food token has been generated! 🎉"
@@ -56,7 +34,24 @@ class Employee::FoodSelectionsController < ApplicationController
 
   private
 
-  def ensure_employee!
-    redirect_to root_path, alert: "Access denied." unless current_user.employee?
+  def redirect_if_already_ordered
+    if current_user.ordered_today?
+      redirect_to employee_tokens_path, notice: "You already have an order for today."
+    end
   end
+
+  def place_order(selected_categories)
+    token = nil
+    ActiveRecord::Base.transaction do
+      order       = current_user.orders.create!(date: Date.current)
+      valid_items = FoodItem.active.where(category: selected_categories).select(&:available_now?)
+
+      raise ActiveRecord::Rollback if valid_items.empty?
+
+      valid_items.each { |item| order.order_items.create!(food_item: item) }
+      token = order.generate_token!
+    end
+    token
+  end
+
 end
