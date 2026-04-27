@@ -1,51 +1,46 @@
 /**
  * location.js — GPS capture for employees
  *
- * WHAT THIS FILE DOES:
- *   1. On every page load, if user is an employee, request browser GPS.
+ * Data flow:
+ *   Browser GPS → POST /employee/location → server stores in session
+ *   → server response indicates allowed/denied → show/hide GPS banner
+ *
+ * Lifecycle:
+ *   1. On page load, if user role is 'employee', request browser GPS.
  *   2. POST coordinates to /employee/location (server stores in session).
- *   3. Show a dismissible banner if GPS denied or outside zone.
- *   4. Re-sends every RESEND_INTERVAL seconds (keeps session fresh).
+ *   3. Show a dismissible banner if GPS denied or user is outside zone.
+ *   4. Re-sends every 5 minutes to keep the session fresh.
  *
- * WHAT THIS FILE DOES NOT DO:
- *   - Make access decisions (server does that via check_location_access).
- *   - Block navigation (server redirects / signs out if needed).
- *   - Store anything in localStorage or sessionStorage.
+ * Access decisions are made server-side in check_location_access.
+ * This script only sends data and shows informational banners.
  *
- * SINGLE INTERVAL GUARANTEE:
- *   Uses a module-level `initialized` flag so that even if turbo:load
- *   fires multiple times, only one setInterval is ever created.
+ * Uses a module-level `initialized` flag so that even if turbo:load
+ * fires multiple times, only one setInterval is ever created.
  */
 
 (function () {
   'use strict';
 
-  var LOCATION_URL     = '/employee/location';
-  var RESEND_INTERVAL  = 5 * 60 * 1000; // 5 minutes in ms
-  var GEO_TIMEOUT      = 10000;          // 10 seconds for browser GPS
-  var initialized      = false;          // ← prevents duplicate intervals
+  var LOCATION_URL    = '/employee/location';
+  var RESEND_INTERVAL = 5 * 60 * 1000;
+  var GEO_TIMEOUT     = 10000;
+  var initialized     = false;
 
-  // ── Entry point ────────────────────────────────────────────────
   function init() {
     var role = getMetaContent('current-user-role');
-    // Only run for employees. Vendors and admins are never GPS-gated.
     if (role !== 'employee') return;
 
-    // Send immediately on first call
     requestAndSend();
 
-    // Start the refresh interval ONCE — guard against turbo:load firing
-    // multiple times on the same page session.
     if (!initialized) {
       initialized = true;
       setInterval(requestAndSend, RESEND_INTERVAL);
     }
   }
 
-  // ── Request GPS from browser ───────────────────────────────────
+  // Request GPS from browser and POST to server
   function requestAndSend() {
     if (!navigator.geolocation) {
-      // Browser has no GPS support
       sendToServer(null, null);
       return;
     }
@@ -54,22 +49,21 @@
       function (pos) {
         sendToServer(pos.coords.latitude, pos.coords.longitude);
       },
-      function (err) {
-        // User denied permission or GPS unavailable
+      function () {
         sendToServer(null, null);
       },
       {
         enableHighAccuracy: true,
         timeout:            GEO_TIMEOUT,
-        maximumAge:         60000   // accept a cached fix up to 1 min old
+        maximumAge:         60000
       }
     );
   }
 
-  // ── POST coordinates to Rails ──────────────────────────────────
+  // POST coordinates to Rails → LocationController#update
   function sendToServer(lat, lng) {
     var csrf = getMetaContent('csrf-token');
-    if (!csrf) return;  // page not fully loaded
+    if (!csrf) return;
 
     var body = {};
     if (lat !== null && lng !== null) {
@@ -94,18 +88,15 @@
         }
       },
       error: function () {
-        // Network error — do nothing, will retry on next interval
+        // Network error — will retry on next interval
       }
     });
   }
 
-  // ── Banner (informational only — enforcement is server-side) ──
+  // Informational banner — enforcement is server-side
   function showBanner(message, gpsGranted) {
     removeBanner();
-    var $banner = $('<div>', {
-      id: 'gps-banner',
-      class: 'gps-banner'
-    });
+    var $banner = $('<div>', { id: 'gps-banner', class: 'gps-banner' });
 
     $('<span>', {
       class: 'gps-banner__icon',
@@ -154,11 +145,6 @@
     removeBanner();
   });
 
-  // ── Hooks ──────────────────────────────────────────────────────
-  // turbo:load fires on every Turbo navigation.
-  // DOMContentLoaded fires on hard page loads (no Turbo).
-  // Both call init(), but the `initialized` flag prevents duplicate intervals.
   document.addEventListener('turbo:load',       init);
   document.addEventListener('DOMContentLoaded', init);
-
-})(); // IIFE
+})();

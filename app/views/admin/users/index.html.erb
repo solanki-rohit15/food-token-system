@@ -69,16 +69,14 @@
                         class: "btn btn-sm #{user.active? ? 'btn-outline-warning' : 'btn-outline-success'} js-user-toggle-btn",
                         form: {
                           class: "d-inline js-fetch-form js-user-toggle-form",
-                          data: { ajax: "true", turbo: "false", user_id: user.id },
-                          onsubmit: "return window.handleAjaxFormSubmit(event, this);"
+                          data: { ajax: "true", turbo: "false", user_id: user.id }
                         } %>
                   <%= button_to "Delete",
                         admin_user_path(user), method: :delete,
                         class: "btn btn-sm btn-outline-danger",
                         form: {
                           class: "d-inline js-fetch-form js-user-delete-form",
-                          data: { ajax: "true", turbo: "false", user_id: user.id, confirm: "Delete #{user.name}? This cannot be undone." },
-                          onsubmit: "return window.handleAjaxFormSubmit(event, this);"
+                          data: { ajax: "true", turbo: "false", user_id: user.id, confirm: "Delete #{user.name}? This cannot be undone." }
                         } %>
                 </div>
               </td>

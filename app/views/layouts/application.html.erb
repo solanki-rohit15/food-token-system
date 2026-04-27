@@ -26,18 +26,20 @@
     <%= render "shared/navbar" %>
   <% end %>
 
-  <%# Flash messages %>
-  <% if notice.present? %>
-    <div class="ft-flash ft-flash-success" id="flash-notice">
-      <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
-      <button type="button" class="ft-flash-close js-flash-close" aria-label="Dismiss message">&times;</button>
-    </div>
-  <% end %>
-  <% if alert.present? %>
-    <div class="ft-flash ft-flash-danger" id="flash-alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i><%= alert %>
-      <button type="button" class="ft-flash-close js-flash-close" aria-label="Dismiss message">&times;</button>
-    </div>
+  <%# Flash messages - disabled on auth pages (they use inline flashes) %>
+  <% unless devise_controller? || controller_name == "change_passwords" %>
+    <% if notice.present? %>
+      <div class="ft-flash ft-flash-success" id="flash-notice">
+        <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
+        <button type="button" class="ft-flash-close js-flash-close" aria-label="Dismiss message">&times;</button>
+      </div>
+    <% end %>
+    <% if alert.present? %>
+      <div class="ft-flash ft-flash-danger" id="flash-alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><%= alert %>
+        <button type="button" class="ft-flash-close js-flash-close" aria-label="Dismiss message">&times;</button>
+      </div>
+    <% end %>
   <% end %>
 
   <main><%= yield %></main>

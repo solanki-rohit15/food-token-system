@@ -1,17 +1,3 @@
-// // Core framework
-// import * as Turbo from "@hotwired/turbo-rails"
-// window.Turbo = Turbo
-
-// import "./controllers"
-// import "./channels"
-
-// import $ from "jquery"
-// window.$ = $
-// window.jQuery = $
-
-// // App modules
-// import "../assets/javascripts/location"
-// import "../assets/javascripts/app_ui"
-// import "../assets/javascripts/scanner"
-
-// console.log("MAIN JS LOADED")
+// Entry point for the Webpacker/jsbundling pipeline.
+// Currently unused — all JS is loaded via Sprockets (app/assets/javascripts/application.js).
+// This file is kept as a placeholder for future migration to jsbundling-rails.

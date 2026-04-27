@@ -1,0 +1,13 @@
+<% if notice.present? %>
+  <div class="alert alert-success alert-sm mb-3 d-flex align-items-center gap-2">
+    <i class="bi bi-check-circle-fill"></i>
+    <span><%= notice %></span>
+  </div>
+<% end %>
+
+<% if alert.present? %>
+  <div class="alert alert-danger alert-sm mb-3 d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span><%= alert %></span>
+  </div>
+<% end %>

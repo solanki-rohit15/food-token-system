@@ -3,11 +3,10 @@
 //= require location
 //= require app_ui
 //= require scanner
-//= require bootstrap 
+//= require bootstrap
 
-// Flash auto-dismiss and clock (non-GPS UI)
+// Live clock displayed in employee hero section — updates every 30s
 document.addEventListener("DOMContentLoaded", function () {
-  // Live clock
   var clockEl = document.getElementById("live-time");
   if (clockEl) {
     function updateClock() {
@@ -22,20 +21,20 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// Admin food item toggle — called from food_items/index view
 function toggleItem(id) {
-  fetch(`/admin/food_items/${id}/toggle_active`, {
+  fetch("/admin/food_items/" + id + "/toggle_active", {
     method: "PATCH",
     headers: {
       "X-CSRF-Token": document.querySelector("[name=csrf-token]").content,
       "Content-Type": "application/json"
     }
   })
-  .then(res => res.json())
-  .then(data => {
-    const el = document.getElementById(`food_item_${data.id}`)
-    el.classList.toggle("inactive", !data.active)
+  .then(function (res) { return res.json() })
+  .then(function (data) {
+    var el = document.getElementById("food_item_" + data.id)
+    if (el) el.classList.toggle("inactive", !data.active)
   })
 }
 
-// global banana zaroori hai (important)
 window.toggleItem = toggleItem

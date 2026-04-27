@@ -29,7 +29,7 @@ Rails.application.routes.draw do
       end
     end
 
-    # ✅ CORRECT PLACEMENT (IMPORTANT)
+    
     resources :redemption_requests, only: [] do
       member do
         post :approve

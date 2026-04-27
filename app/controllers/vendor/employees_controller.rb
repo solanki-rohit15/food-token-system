@@ -1,6 +1,6 @@
 class Vendor::EmployeesController < ApplicationController
   before_action :authenticate_user!
-  before_action :ensure_vendor!
+  before_action :require_vendor!
 
   def index
     @employees = User.employees.active
@@ -11,11 +11,5 @@ class Vendor::EmployeesController < ApplicationController
   def show
     @employee = User.employees.find(params[:id])
     @today_order = @employee.orders.today.includes(:food_items, :token).first
-  end
-
-  private
-
-  def ensure_vendor!
-    redirect_to root_path, alert: "Access denied." unless current_user.vendor?
   end
 end

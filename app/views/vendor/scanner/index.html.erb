@@ -2,7 +2,7 @@
 
 <%# jsQR loaded via CDN — must be available before scanner.js uses window.jsQR %>
 <% content_for :head do %>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
 <% end %>
 
 <div class="ft-page" id="scanner-page" data-verify-url="<%= vendor_verify_scan_path %>">

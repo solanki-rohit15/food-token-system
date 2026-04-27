@@ -7,13 +7,10 @@
     <p class="ft-auth-sub">Sign in to your cafeteria account</p>
   </div>
 
+  <%= render "shared/inline_flash" %>
+
   <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
-    <% if resource.errors.any? %>
-      <div class="alert alert-danger alert-sm mb-3 d-flex align-items-center gap-2">
-        <i class="bi bi-exclamation-triangle-fill"></i>
-        <%= resource.errors.full_messages.first %>
-      </div>
-    <% end %>
+
 
     <div class="mb-3">
       <label class="form-label ft-label">Email</label>
@@ -31,14 +28,14 @@
       <%= link_to "Forgot password?", new_user_password_path, class: "text-muted small text-decoration-none" %>
     </div>
 
-    <%= f.submit "Sign In", class: "btn cc-btn-primary w-100 mb-3" %>
+    <%= f.submit "Sign In", class: "btn ft-btn-google w-100" %>
   <% end %>
 
   <div class="text-center text-muted mb-3">or</div>
 
   <%= button_to user_google_oauth2_omniauth_authorize_path,
                 method: :post,
-                class: "btn ft-btn-google w-100",
+                class: "btn cc-btn-primary w-100 mb-3",
                 form: { data: { turbo: false } } do %>
     <i class="bi bi-google me-2"></i>
     Sign in with Google

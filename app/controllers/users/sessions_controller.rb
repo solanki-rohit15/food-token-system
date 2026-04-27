@@ -11,7 +11,7 @@ class Users::SessionsController < Devise::SessionsController
   #
   # This is simpler, more reliable, and cannot be bypassed.
 
-skip_before_action :check_location_access, raise: false
+  skip_before_action :check_location_access, raise: false
 
   def destroy
     # Clear GPS session data on logout

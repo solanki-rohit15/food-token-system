@@ -24,45 +24,38 @@ class Admin::UsersController < ApplicationController
     @user = User.new(role: :employee)
   end
 
-  def create
-    temp_password = Devise.friendly_token[0, 12]
-    @user = User.new(user_params.merge(
-      password:              temp_password,
-      password_confirmation: temp_password,
-      confirmed_at:          Time.current,
-      admin_created:         true,
-      must_change_password:  true
-    ))
+def create
+  temp_password = Devise.friendly_token[0, 12]
 
-    if @user.save
-      UserMailer.invitation_email(@user, temp_password).deliver_later
-      render json: {
-        success: true,
-        id: @user.id,
-        name: @user.name,
-        message: "#{@user.name} created. Login credentials sent by email."
-      }
-    else
-      render json: { success: false, message: @user.errors.full_messages.to_sentence },
-             status: :unprocessable_entity
-    end
+  @user = User.new(user_params.merge(
+    password:              temp_password,
+    password_confirmation: temp_password,
+    confirmed_at:          Time.current,
+    admin_created:         true,
+    must_change_password:  true
+  ))
+
+  if @user.save
+    UserMailer.invitation_email(@user, temp_password).deliver_later
+
+    redirect_to admin_users_path,
+                notice: "#{@user.name} created. Login credentials sent by email."
+  else
+    flash.now[:alert] = @user.errors.full_messages.to_sentence
+    render :new, status: :unprocessable_entity
   end
+end
 
   def edit; end
-
-  def update
-    if @user.update(update_user_params)
-      render json: {
-        success: true,
-        id: @user.id,
-        active: @user.active?,
-        message: "User updated."
-      }
-    else
-      render json: { success: false, message: @user.errors.full_messages.to_sentence },
-             status: :unprocessable_entity
-    end
+  
+def update
+  if @user.update(update_user_params)
+    redirect_to admin_users_path, notice: "User updated successfully."
+  else
+    flash.now[:alert] = @user.errors.full_messages.to_sentence
+    render :edit, status: :unprocessable_entity
   end
+end
 
   def destroy
     if @user == current_user

@@ -39,7 +39,7 @@
           <div class="mb-3">
             <div class="ft-section-label mb-2">⚡ Pending Approvals</div>
             <% @pending_requests.each do |req| %>
-              <div class="card border-warning mb-2">
+              <div class="card border-warning mb-2" id="pending_req_<%= req.id %>">
                 <div class="card-body py-2 px-3">
                   <div class="d-flex align-items-center gap-2 mb-2">
                     <i class="bi bi-bell-fill text-warning"></i>
@@ -54,10 +54,17 @@
                   </div>
                   <div class="d-flex gap-2">
                     <%= button_to "✅ Approve", approve_employee_redemption_request_path(req),
-                          method: :post, class: "btn btn-success btn-sm flex-fill",
-                          data: { turbo_confirm: "Approve #{req.order_item.food_item.category_label}?" } %>
+                          method: :post, class: "btn btn-success btn-sm w-100",
+                          form: {
+                            class: "flex-fill js-fetch-form js-redemption-approve-form",
+                            data: { ajax: "true", turbo: "false", confirm: "Approve #{req.order_item.food_item.category_label}?" }
+                          } %>
                     <%= button_to "❌ Reject", reject_employee_redemption_request_path(req),
-                          method: :post, class: "btn btn-outline-danger btn-sm flex-fill" %>
+                          method: :post, class: "btn btn-outline-danger btn-sm w-100",
+                          form: {
+                            class: "flex-fill js-fetch-form js-redemption-reject-form",
+                            data: { ajax: "true", turbo: "false", confirm: "Reject request?" }
+                          } %>
                   </div>
                 </div>
               </div>
@@ -68,28 +75,32 @@
         <%# Per-item QR cards %>
         <div class="ft-section-label mb-2">Meal QR Codes</div>
         <% @order_items.each do |item| %>
-          <div class="card mb-3 <%= item.redeemed? ? 'border-success opacity-75' : 'border-primary' %>">
+          <div class="card mb-3 <%= item.redeemed? ? 'border-success opacity-75' : 'border-primary' %>" id="qr_card_<%= item.id %>">
             <div class="card-header d-flex align-items-center justify-content-between py-2">
               <span class="fw-semibold"><%= item.food_item.icon %> <%= item.food_item.category_label %></span>
-              <% if item.redeemed? %>
-                <span class="badge bg-success">✅ <%= item.redeemed_at&.strftime("%I:%M %p") %></span>
-              <% elsif item.pending_redemption_request? %>
-                <span class="badge bg-warning text-dark">⏳ Pending</span>
+              <span id="qr_card_badge_<%= item.id %>">
+                <% if item.redeemed? %>
+                  <span class="badge bg-success">✅ <%= item.redeemed_at&.strftime("%I:%M %p") %></span>
+                <% elsif item.pending_redemption_request? %>
+                  <span class="badge bg-warning text-dark">⏳ Pending</span>
+                <% else %>
+                  <span class="badge bg-light border text-dark">Active</span>
+                <% end %>
+              </span>
+            </div>
+            <div id="qr_card_body_<%= item.id %>">
+              <% unless item.redeemed? %>
+                <div class="card-body text-center py-3">
+                  <div class="ft-qr-img mx-auto mb-2" style="max-width:200px"><%= raw item.qr_svg %></div>
+                  <div class="text-muted small font-monospace"><%= item.item_code %></div>
+                </div>
               <% else %>
-                <span class="badge bg-light border text-dark">Active</span>
+                <div class="card-body text-center py-3 text-success">
+                  <i class="bi bi-check-circle-fill fs-1"></i>
+                  <div class="mt-1 small">Redeemed by <%= item.redeemed_by&.name || "vendor" %></div>
+                </div>
               <% end %>
             </div>
-            <% unless item.redeemed? %>
-              <div class="card-body text-center py-3">
-                <div class="ft-qr-img mx-auto mb-2" style="max-width:200px"><%= raw item.qr_svg %></div>
-                <div class="text-muted small font-monospace"><%= item.item_code %></div>
-              </div>
-            <% else %>
-              <div class="card-body text-center py-3 text-success">
-                <i class="bi bi-check-circle-fill fs-1"></i>
-                <div class="mt-1 small">Redeemed by <%= item.redeemed_by&.name || "vendor" %></div>
-              </div>
-            <% end %>
           </div>
         <% end %>
 

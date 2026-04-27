@@ -17,15 +17,13 @@
             class: "btn btn-sm #{@user.active? ? 'btn-outline-warning' : 'btn-outline-success'} js-user-show-toggle-btn",
             form: {
               class: "d-inline js-fetch-form js-user-show-toggle-form",
-              data: { ajax: "true", turbo: "false", user_id: @user.id },
-              onsubmit: "return window.handleAjaxFormSubmit(event, this);"
+              data: { ajax: "true", turbo: "false", user_id: @user.id }
             } %>
       <%= button_to "Resend Invite", resend_invitation_admin_user_path(@user), method: :post,
             class: "btn btn-sm btn-outline-info",
             form: {
               class: "d-inline js-fetch-form js-user-resend-form",
-              data: { ajax: "true", turbo: "false", user_id: @user.id },
-              onsubmit: "return window.handleAjaxFormSubmit(event, this);"
+              data: { ajax: "true", turbo: "false", user_id: @user.id }
             } %>
     </div>
   </div>

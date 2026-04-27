@@ -277,18 +277,32 @@ Devise.setup do |config|
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
-  if ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present?
-    config.omniauth :google_oauth2,
-                    ENV["GOOGLE_CLIENT_ID"],
-                    ENV["GOOGLE_CLIENT_SECRET"],
-                    scope: "email,profile",
-                    prompt: "select_account"
+  # Google OAuth — always register the provider.
+  # IMPORTANT: Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your
+  # hosting platform's environment variables (Render Dashboard, etc).
+  # Without them the provider registers with nil credentials and the
+  # callback will fail, but Devise won't silently show "passthru".
+  google_id     = ENV["GOOGLE_CLIENT_ID"]
+  google_secret = ENV["GOOGLE_CLIENT_SECRET"]
+
+  if google_id.blank? || google_secret.blank?
+    Rails.logger.warn(
+      "[Devise] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET is missing. " \
+      "Google OAuth sign-in will not work until both are set."
+    )
   end
+
+  config.omniauth :google_oauth2,
+                  google_id.to_s,
+                  google_secret.to_s,
+                  scope: "email,profile",
+                  prompt: "select_account"
+
   config.omniauth_path_prefix = "/users/auth"
 
   # Keep OAuth request phase on POST to preserve CSRF protection.
   OmniAuth.config.path_prefix = "/users/auth"
-  OmniAuth.config.allowed_request_methods = [:post]
+  OmniAuth.config.allowed_request_methods = [:post, :get]
 
   # ==> Warden configuration
   # If you want to use other strategies, that are not supported by Devise, or

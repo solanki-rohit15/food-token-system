@@ -11,18 +11,7 @@
 </head>
 <body class="auth-body">
 
-  <% if notice.present? %>
-    <div class="ft-flash ft-flash-success" id="flash-notice">
-      <i class="bi bi-check-circle-fill me-2"></i><%= notice %>
-      <button type="button" class="ft-flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-  <% end %>
-  <% if alert.present? %>
-    <div class="ft-flash ft-flash-danger" id="flash-alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i><%= alert %>
-      <button type="button" class="ft-flash-close" onclick="this.parentElement.remove()">&times;</button>
-    </div>
-  <% end %>
+
 
   <div class="auth-main">
     <%= yield %>

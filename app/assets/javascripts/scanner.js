@@ -1,57 +1,91 @@
 /**
  * scanner.js — Vendor QR scanner (jQuery)
  *
- * Only activates when #scanner-page exists in the DOM.
- * jsQR is loaded via CDN <script> in the scanner view head,
- * available as window.jsQR before this module runs.
+ * Data flow:
+ *   Camera stream → canvas → jsQR decode → verifyCode() POST → handleResult() UI update
+ *
+ * Activates only when #scanner-page exists in the DOM.
+ * jsQR is loaded via CDN <script defer> in the scanner view head.
  */
 
-
 $(document).on('turbo:load DOMContentLoaded', function () {
-  const $page = $('#scanner-page')
-  if (!$page.length) return  // guard — only run on scanner page
+  var $page = $('#scanner-page')
+  if (!$page.length) return
 
-  const verifyUrl = $page.data('verify-url')
-  const csrf      = $('meta[name="csrf-token"]').attr('content')
-  let tokenId     = null
-  let scanning    = true
+  var verifyUrl = $page.data('verify-url')
+  var csrf      = $('meta[name="csrf-token"]').attr('content')
+  var tokenId   = null
+  var scanning  = true
+  var stream    = null
 
-  const video  = document.getElementById('qr-video')
-  const canvas = document.getElementById('qr-canvas')
-  const ctx    = canvas.getContext('2d')
+  var video  = document.getElementById('qr-video')
+  var canvas = document.getElementById('qr-canvas')
+  var ctx    = canvas.getContext('2d')
 
-  // ── Start camera ─────────────────────────────────────────────────
-  if (navigator.mediaDevices?.getUserMedia) {
+  // ── Start camera with high-resolution constraints ────────────────
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' } })
-      .then(stream => { video.srcObject = stream; video.play(); requestAnimationFrame(tick) })
-      .catch(() => {})
+      .getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width:  { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      })
+      .then(function (mediaStream) {
+        stream = mediaStream
+        video.srcObject = mediaStream
+        video.play()
+        waitForJsQRThenScan()
+      })
+      .catch(function () {
+        $('.ft-scan-hint').text('Camera access denied. Use manual entry below.')
+      })
+  } else {
+    $('.ft-scan-hint').text('Camera not supported on this browser.')
   }
 
+  // ── Wait for jsQR library to load before starting scan loop ──────
+  function waitForJsQRThenScan() {
+    if (typeof window.jsQR === 'function') {
+      requestAnimationFrame(tick)
+    } else {
+      setTimeout(waitForJsQRThenScan, 100)
+    }
+  }
+
+  // ── Main scan loop ───────────────────────────────────────────────
   function tick() {
     if (!scanning) return
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
       canvas.height = video.videoHeight
       canvas.width  = video.videoWidth
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-      const img  = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const code = window.jsQR?.(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' })
-      if (code) { scanning = false; verifyCode(code.data); return }
+      var img  = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      var code = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' })
+      if (code && code.data) {
+        scanning = false
+        verifyCode(code.data)
+        return
+      }
     }
     requestAnimationFrame(tick)
   }
 
   // ── Manual entry ─────────────────────────────────────────────────
   $('#verify-manual-btn').on('click', function () {
-    const val = $('#manual-qr').val().trim()
+    var val = $('#manual-qr').val().trim()
     if (val) { scanning = false; verifyCode(val) }
   })
 
   $('#manual-qr').on('keypress', function (e) {
-    if (e.key === 'Enter') { scanning = false; verifyCode($(this).val().trim()) }
+    if (e.key === 'Enter') {
+      var val = $(this).val().trim()
+      if (val) { scanning = false; verifyCode(val) }
+    }
   })
 
-  // ── Verify QR code ───────────────────────────────────────────────
+  // ── Verify QR code via AJAX POST → ScannerController#verify ─────
   function verifyCode(data) {
     $.ajax({
       url:         verifyUrl,
@@ -60,10 +94,15 @@ $(document).on('turbo:load DOMContentLoaded', function () {
       headers:     { 'X-CSRF-Token': csrf },
       data:        JSON.stringify({ qr_data: data }),
       success:     handleResult,
-      error() { alert('Error verifying. Please try again.'); scanning = true }
+      error:       function () {
+        showFlashAlert('Error verifying. Please try again.')
+        scanning = true
+        requestAnimationFrame(tick)
+      }
     })
   }
 
+  // ── Handle verify response → show result UI ─────────────────────
   function handleResult(result) {
     $('#scan-result').removeClass('d-none')
     $('#camera-view').addClass('d-none')
@@ -94,16 +133,16 @@ $(document).on('turbo:load DOMContentLoaded', function () {
     }
   }
 
-  // ── Render per-item list + request buttons ────────────────────────
+  // ── Render per-item list + request buttons ───────────────────────
   function renderItems(items, scannedItem) {
-    const $items   = $('#token-items').empty()
-    const $buttons = $('#request-buttons-container').empty()
+    var $items   = $('#token-items').empty()
+    var $buttons = $('#request-buttons-container').empty()
 
-    items.forEach(item => {
-      const highlight = scannedItem?.item_code === item.item_code ? 'border border-primary' : ''
-      const itemIconLabel = `${item.icon} ${item.label}`
+    items.forEach(function (item) {
+      var highlight = scannedItem && scannedItem.item_code === item.item_code ? 'border border-primary' : ''
+      var itemIconLabel = item.icon + ' ' + item.label
 
-      const $itemRow = $('<div>', { class: `d-flex align-items-center gap-2 p-2 rounded ${highlight} bg-light` })
+      var $itemRow = $('<div>', { class: 'd-flex align-items-center gap-2 p-2 rounded ' + highlight + ' bg-light' })
       $('<span>', { text: itemIconLabel }).appendTo($itemRow)
       createItemBadge(item.redeemed).appendTo($itemRow)
       $items.append($itemRow)
@@ -123,31 +162,32 @@ $(document).on('turbo:load DOMContentLoaded', function () {
 
   // ── Send per-item redemption request ─────────────────────────────
   $(document).on('click', '.send-scan-req', function () {
-    const $btn   = $(this)
-    const itemId = $btn.data('item-id')
-    const label  = $btn.data('label')
+    var $btn   = $(this)
+    var itemId = $btn.data('item-id')
+    var label  = $btn.data('label')
 
     setScanRequestButtonLoading($btn)
 
     $.ajax({
-      url:         `/vendor/tokens/${tokenId}/send_redemption_request?order_item_id=${itemId}`,
-      method:      'POST',
-      headers:     { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' },
-      success(data) {
+      url:     '/vendor/tokens/' + tokenId + '/send_redemption_request?order_item_id=' + itemId,
+      method:  'POST',
+      headers: { 'X-CSRF-Token': csrf, 'Content-Type': 'application/json' },
+      success: function (data) {
         if (data.success) {
           $btn.replaceWith(createRequestSentAlert(label))
         } else {
           resetScanRequestButton($btn, label)
-          alert(data.message)
+          showFlashAlert(data.message)
         }
       },
-      error() {
+      error: function () {
         resetScanRequestButton($btn, label)
-        alert('Network error. Please try again.')
+        showFlashAlert('Network error. Please try again.')
       }
     })
   })
 
+  // ── UI helper functions ──────────────────────────────────────────
   function createItemBadge(redeemed) {
     if (redeemed) {
       return $('<span>', { class: 'badge bg-success ms-auto', text: '✅ Redeemed' })
@@ -156,8 +196,8 @@ $(document).on('turbo:load DOMContentLoaded', function () {
   }
 
   function createScanRequestButton(item) {
-    const labelText = `Request: ${item.icon} ${item.label}`
-    const $button = $('<button>', {
+    var labelText = 'Request: ' + item.icon + ' ' + item.label
+    var $button = $('<button>', {
       type: 'button',
       class: 'btn btn-primary w-100 mb-2 send-scan-req'
     })
@@ -170,17 +210,17 @@ $(document).on('turbo:load DOMContentLoaded', function () {
   }
 
   function setScanRequestButtonLoading($btn) {
-    const spinner = $('<span>', { class: 'spinner-border spinner-border-sm me-2', 'aria-hidden': 'true' })
+    var spinner = $('<span>', { class: 'spinner-border spinner-border-sm me-2', 'aria-hidden': 'true' })
     $btn.prop('disabled', true).empty().append(spinner).append(document.createTextNode('Sending…'))
   }
 
   function resetScanRequestButton($btn, label) {
-    const icon = $('<i>', { class: 'bi bi-send me-2', 'aria-hidden': 'true' })
-    $btn.prop('disabled', false).empty().append(icon).append(document.createTextNode(`Request: ${label}`))
+    var icon = $('<i>', { class: 'bi bi-send me-2', 'aria-hidden': 'true' })
+    $btn.prop('disabled', false).empty().append(icon).append(document.createTextNode('Request: ' + label))
   }
 
   function createRequestSentAlert(label) {
-    const $alert = $('<div>', { class: 'alert alert-success mb-2' })
+    var $alert = $('<div>', { class: 'alert alert-success mb-2' })
     $('<i>', { class: 'bi bi-check-circle me-1', 'aria-hidden': 'true' }).appendTo($alert)
     $alert.append(document.createTextNode('Request sent for '))
     $('<strong>', { text: label }).appendTo($alert)
@@ -188,7 +228,18 @@ $(document).on('turbo:load DOMContentLoaded', function () {
     return $alert
   }
 
-  // ── Reset scanner ────────────────────────────────────────────────
+  function showFlashAlert(message) {
+    var $flash = $('.ft-flash')
+    if ($flash.length) $flash.remove()
+    var $el = $('<div>', { class: 'ft-flash ft-flash-danger' })
+    $('<i>', { class: 'bi bi-exclamation-triangle-fill me-2' }).appendTo($el)
+    $el.append(document.createTextNode(message))
+    $('<button>', { type: 'button', class: 'ft-flash-close js-flash-close', text: '×' }).appendTo($el)
+    $('body').prepend($el)
+    setTimeout(function () { $el.fadeOut(500, function () { $(this).remove() }) }, 5000)
+  }
+
+  // ── Reset scanner — stops result view, restarts camera scan ──────
   function resetScanner() {
     tokenId  = null
     scanning = true

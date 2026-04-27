@@ -723,6 +723,41 @@ button,
   margin-bottom: 4px;
 }
 
+// Token hero card (employee dashboard — today's active token)
+.ft-token-hero-card {
+  @include cc-card;
+  border-left: 4px solid var(--cc-red);
+  box-shadow: var(--cc-shadow-md);
+}
+
+// Meal window availability badges (employee dashboard)
+.cc-badge-open {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.cc-badge-closed {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--cc-grey-light);
+  color: var(--cc-grey);
+  border: 1px solid var(--cc-border);
+}
+
+// Opacity utility (Bootstrap 5.3 doesn't include opacity-60)
+.opacity-60 {
+  opacity: 0.6;
+}
+
 // Token number
 .ft-token-number {
   font-size: 17px;

@@ -89,7 +89,7 @@ class User < ApplicationRecord
     user.assign_attributes(
       provider: "google_oauth2",
       uid: auth["uid"],
-      google_avatar_url: auth.dig("info", "image")
+      avatar_url: auth.dig("info", "image")
     )
 
     return user if user.save
