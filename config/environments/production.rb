@@ -41,7 +41,8 @@ Rails.application.configure do
   # ── Background Jobs ─────────────────────────────────────────────
   # SolidQueue runs inside Puma when SOLID_QUEUE_IN_PUMA=true (set this in Render env vars).
   # Falls back to :async for single-dyno deployments without that flag.
-  config.active_job.queue_adapter = ENV["SOLID_QUEUE_IN_PUMA"].present? ? :solid_queue : :async
+  # :async runs jobs in Puma's thread pool — no extra gem needed.
+  config.active_job.queue_adapter = :async
 
   # ── Action Mailer ────────────────────────────────────────────────
   # IMPORTANT: raise_delivery_errors = false so a mail timeout does NOT
