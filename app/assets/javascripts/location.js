@@ -62,35 +62,23 @@
 
   // POST coordinates to Rails → LocationController#update
   function sendToServer(lat, lng) {
-    var csrf = getMetaContent('csrf-token');
-    if (!csrf) return;
-
     var body = {};
     if (lat !== null && lng !== null) {
       body.latitude  = lat;
       body.longitude = lng;
     }
 
-    $.ajax({
-      url: LOCATION_URL,
-      method: 'POST',
-      contentType: 'application/json',
-      headers: {
-        'X-CSRF-Token': csrf,
-        'Accept': 'application/json'
-      },
-      data: JSON.stringify(body),
-      success: function (data) {
+    FT.apiRequest({ url: LOCATION_URL, method: 'POST', body: body })
+      .then(function (data) {
         if (data.allowed) {
           removeBanner();
         } else {
           showBanner(data.message, lat !== null);
         }
-      },
-      error: function () {
+      })
+      .catch(function () {
         // Network error — will retry on next interval
-      }
-    });
+      });
   }
 
   // Informational banner — enforcement is server-side

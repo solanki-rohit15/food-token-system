@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 class DeviseCreateUsers < ActiveRecord::Migration[8.1]
-
-
-
 def change
     create_table :users do |t|
       t.string   :name,             null: false
@@ -40,7 +37,7 @@ def change
     add_index :users, :reset_password_token,   unique: true
     add_index :users, :confirmation_token,     unique: true
     add_index :users, :unlock_token,           unique: true
-    add_index :users, [:provider, :uid],       unique: true
+    add_index :users, [ :provider, :uid ],       unique: true
   end
 
 

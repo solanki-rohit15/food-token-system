@@ -4,7 +4,7 @@ class User < ApplicationRecord
   devise :database_authenticatable,
          :recoverable, :rememberable, :validatable,
          :confirmable, :lockable, :trackable,
-         :omniauthable, omniauth_providers: [:google_oauth2]
+         :omniauthable, omniauth_providers: [ :google_oauth2 ]
 
   enum :role, { employee: 0, vendor: 1, admin: 2 }
 
@@ -57,17 +57,7 @@ class User < ApplicationRecord
     end
   end
 
-  def active_token_today
-    orders.today.joins(:token).merge(Token.active).first&.token
-  end
 
-  def today_order
-    orders.today.includes(:food_items, :token).first
-  end
-
-  def ordered_today?
-    orders.today.exists?
-  end
 
   def self.from_google_oauth(auth)
     email = auth.dig("info", "email").to_s.strip.downcase

@@ -5,9 +5,21 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" defer></script>
 <% end %>
 
-<div class="ft-page" id="scanner-page" data-verify-url="<%= vendor_verify_scan_path %>">
+<%#
+  If vendor arrived via a /qr/<signed_token> redirect, the controller
+  may have resolved the item and set @prefilled_result.
+  We pass it as a JSON data attribute so scanner.js can show the
+  result immediately without needing another AJAX call.
+%>
+<div class="ft-page" id="scanner-page"
+     data-verify-url="<%= vendor_verify_scan_path %>"
+     <% if @prefilled_result.present? %>
+       data-prefilled-result="<%= @prefilled_result.to_json.html_safe %>"
+     <% end %>>
+
   <div class="ft-scanner-full">
 
+    <%# Camera view %>
     <div class="ft-camera-view" id="camera-view">
       <video id="qr-video" autoplay muted playsinline class="ft-camera-video"></video>
       <canvas id="qr-canvas" class="d-none"></canvas>
@@ -21,19 +33,11 @@
       </div>
     </div>
 
-    <div class="ft-scanner-manual px-3 py-3">
-      <div class="ft-divider-text mb-2"><span>or enter code manually</span></div>
-      <div class="input-group">
-        <input type="text" id="manual-qr" class="form-control ft-input"
-               placeholder="FT-... (token) or FI-... (item)" autocomplete="off">
-        <button class="btn ft-btn-primary" id="verify-manual-btn">
-          <i class="bi bi-check-circle me-1"></i>Verify
-        </button>
-      </div>
-    </div>
 
+    <%# Scan result panel (hidden initially, shown by scanner.js) %>
     <div id="scan-result" class="ft-scan-result px-3 pb-4 d-none">
 
+      <%# Valid result %>
       <div id="result-valid" class="d-none">
         <div class="ft-result-header ft-result-valid p-3 rounded-top">
           <div class="ft-result-status-icon">✅</div>
@@ -46,7 +50,6 @@
             <div>
               <div class="fw-semibold" id="emp-name">—</div>
               <div class="text-muted small" id="emp-email">—</div>
-              <div class="text-muted small" id="emp-dept">—</div>
             </div>
           </div>
 
@@ -69,12 +72,13 @@
         <div class="px-3 mt-3" id="request-buttons-container"></div>
 
         <div class="px-3 mt-2">
-          <button class="btn ft-btn-outline w-100" id="reset-scanner-btn">
+          <button class="btn ft-btn-outline w-100 ft-dashboard-btn" id="reset-scanner-btn">
             <i class="bi bi-arrow-left me-2"></i>Scan Another
           </button>
         </div>
       </div>
 
+      <%# Invalid result %>
       <div id="result-invalid" class="d-none">
         <div class="ft-result-header ft-result-invalid p-3 rounded">
           <div class="ft-result-status-icon">❌</div>
@@ -83,7 +87,7 @@
         <div class="ft-vendor-card mt-3">
           <p class="text-muted mb-0" id="invalid-message">This code is not valid.</p>
         </div>
-        <button class="btn ft-btn-primary w-100 mt-3 reset-scanner-btn" id="reset-scanner-btn-2">
+        <button class="btn ft-btn-primary w-100 mt-3 ft-dashboard-btn" id="reset-scanner-btn-2">
           <i class="bi bi-arrow-left me-2"></i>Try Again
         </button>
       </div>

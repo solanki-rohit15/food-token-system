@@ -1,0 +1,17 @@
+<%# Reusable profile card — rendered in both turbo-frame modal and full-page show views.
+    Expects local `user` variable. %>
+<div class="card ft-card h-100">
+  <div class="card-body text-center">
+    <div class="ft-avatar-xl mx-auto mb-3"><%= user.initials %></div>
+    <h5 class="fw-bold mb-0"><%= user.name %></h5>
+    <p class="text-muted small mb-2"><%= user.email %></p>
+    <% if user.phone.present? %>
+      <p class="text-muted small mb-2"><i class="bi bi-phone me-1"></i><%= user.phone %></p>
+    <% end %>
+    <% if user.employee_profile.present? %>
+      <p class="text-muted small mb-0">
+        ID: <span class="font-monospace"><%= user.employee_profile.employee_id %></span>
+      </p>
+    <% end %>
+  </div>
+</div>

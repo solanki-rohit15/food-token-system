@@ -1,5 +1,4 @@
 class Admin::DashboardController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
 
   def index
@@ -27,7 +26,7 @@ class Admin::DashboardController < ApplicationController
 
   def fetch_recent_tokens
     Token.today
-         .includes(order: [:user, :food_items])
+         .includes(order: [ :user, :food_items ])
          .order(created_at: :desc)
          .limit(10)
   end

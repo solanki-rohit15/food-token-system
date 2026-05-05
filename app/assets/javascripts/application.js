@@ -1,40 +1,38 @@
 //= require jquery
 //= require rails-ujs
+//= require api
+//= require ui
 //= require location
 //= require app_ui
+//= require dashboard
 //= require scanner
 //= require bootstrap
 
-// Live clock displayed in employee hero section — updates every 30s
-document.addEventListener("DOMContentLoaded", function () {
-  var clockEl = document.getElementById("live-time");
+// Live clock — employee hero section
+document.addEventListener('DOMContentLoaded', function () {
+  var clockEl = document.getElementById('live-time');
   if (clockEl) {
     function updateClock() {
-      var now  = new Date();
-      var h    = now.getHours() % 12 || 12;
-      var m    = now.getMinutes().toString().padStart(2, "0");
-      var ampm = now.getHours() >= 12 ? "PM" : "AM";
-      clockEl.textContent = h + ":" + m + " " + ampm;
+      var d = new Date();
+      var h = d.getHours() % 12 || 12;
+      var m = d.getMinutes().toString().padStart(2, '0');
+      clockEl.textContent = h + ':' + m + ' ' + (d.getHours() >= 12 ? 'PM' : 'AM');
     }
     updateClock();
     setInterval(updateClock, 30000);
   }
 });
 
-// Admin food item toggle — called from food_items/index view
+// Admin food item toggle
 function toggleItem(id) {
-  fetch("/admin/food_items/" + id + "/toggle_active", {
-    method: "PATCH",
-    headers: {
-      "X-CSRF-Token": document.querySelector("[name=csrf-token]").content,
-      "Content-Type": "application/json"
-    }
+  FT.apiRequest({
+    url:    '/admin/food_items/' + id + '/toggle_active',
+    method: 'PATCH'
   })
-  .then(function (res) { return res.json() })
   .then(function (data) {
-    var el = document.getElementById("food_item_" + data.id)
-    if (el) el.classList.toggle("inactive", !data.active)
+    var el = document.getElementById('food_item_' + data.id);
+    if (el) el.classList.toggle('inactive', !data.active);
   })
+  .catch(FT.handleError);
 }
-
-window.toggleItem = toggleItem
+window.toggleItem = toggleItem;

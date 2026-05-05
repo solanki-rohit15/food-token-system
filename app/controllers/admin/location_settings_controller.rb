@@ -1,5 +1,4 @@
 class Admin::LocationSettingsController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
   before_action :load_setting
 

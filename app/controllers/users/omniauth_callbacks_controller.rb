@@ -32,9 +32,9 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     )
     message = if error_type.to_s == "authenticity_error"
                 "Your session expired. Please try signing in with Google again."
-              else
+    else
                 UNAUTHORIZED_MESSAGE
-              end
+    end
 
     redirect_to new_user_session_path, alert: message
   end

@@ -1,7 +1,6 @@
 require "csv"
 
 class Admin::ReportsController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
 
   def index
@@ -10,7 +9,7 @@ class Admin::ReportsController < ApplicationController
     base_scope = Token.for_date(@date)
 
     @tokens = base_scope
-                .includes(order: [:user, :food_items])
+                .includes(order: [ :user, :food_items ])
                 .order(created_at: :desc)
 
     counts = base_scope.group(:status).count
@@ -36,13 +35,14 @@ class Admin::ReportsController < ApplicationController
                    .includes(:user, :food_items, :token)
                    .order(date: :desc, created_at: :desc)
 
-    @daily_stats = build_monthly_daily_stats(@month_start, @month_end)
+    @daily_stats    = build_monthly_daily_stats(@month_start, @month_end)
+    @monthly_counts = build_monthly_token_counts(@orders)
   end
 
   def employee_wise
     @date        = safe_parse_date(params[:date]) || Date.current
     @employees   = User.employees.active
-                       .includes(orders: [:food_items, :token])
+                       .includes(orders: [ :food_items, :token ])
                        .order(:name)
 
     @date_orders = Order.for_date(@date)
@@ -52,8 +52,8 @@ class Admin::ReportsController < ApplicationController
 
   def export
     date   = safe_parse_date(params[:date]) || Date.current
-    tokens = Token.for_date(date).includes(order: [:user, :food_items])
-  
+    tokens = Token.for_date(date).includes(order: [ :user, :food_items ])
+
     send_csv(daily_csv(tokens), "report_daily_#{date}.csv")
   end
 
@@ -73,7 +73,7 @@ class Admin::ReportsController < ApplicationController
   # Monthly stats
   # ─────────────────────────────────────────────
   def build_monthly_daily_stats(month_start, month_end)
-    cutoff = [month_end, Date.current].min
+    cutoff = [ month_end, Date.current ].min
 
     order_counts = Order.where(date: month_start..cutoff).group(:date).count
 
@@ -86,11 +86,26 @@ class Admin::ReportsController < ApplicationController
       {
         date:     date,
         orders:   order_counts[date].to_i,
-        redeemed: token_counts[[date, "redeemed"]].to_i,
-        expired:  token_counts[[date, "expired"]].to_i +
-                  token_counts[[date, "active"]].to_i
+        redeemed: token_counts[[ date, "redeemed" ]].to_i,
+        expired:  token_counts[[ date, "expired" ]].to_i +
+                  token_counts[[ date, "active" ]].to_i
       }
     end
+  end
+
+  # Counts redeemed/active/expired from a preloaded orders collection.
+  # Avoids N+1 — tokens are already included via :token.
+  def build_monthly_token_counts(orders)
+    redeemed = expired = active = 0
+    orders.each do |o|
+      t = o.token
+      next unless t
+      if    t.redeemed? then redeemed += 1
+      elsif t.expired?  then expired  += 1
+      elsif t.active?   then active   += 1
+      end
+    end
+    { total: orders.size, redeemed: redeemed, active: active, expired: expired }
   end
 
   # ─────────────────────────────────────────────
@@ -101,7 +116,7 @@ class Admin::ReportsController < ApplicationController
       order&.date,
       user&.name,
       user&.email,
-      (order&.food_items || []).map(&:category_label).join(", "),
+      order&.items_label,
       token&.token_number,
       token&.status,
       token&.redeemed_at&.strftime("%I:%M %p")
@@ -110,8 +125,8 @@ class Admin::ReportsController < ApplicationController
 
   # ─────────────────────────────────────────────
   def csv_headers
-    ["Date", "Employee", "Email", "Categories",
-     "Token Number", "Status", "Redeemed At"]
+    [ "Date", "Employee", "Email", "Categories",
+     "Token Number", "Status", "Redeemed At" ]
   end
 
   # ─────────────────────────────────────────────

@@ -6,11 +6,11 @@
       <p class="text-muted small mb-0"><%= @date.strftime("%A, %d %B %Y") %></p>
     </div>
     <div class="d-flex gap-2 align-items-center">
-      <%= form_tag daily_admin_reports_path, method: :get, class: "d-flex gap-2" do %>
+      <%= form_tag daily_admin_reports_path, method: :get, class: "d-flex gap-2 js-pjax-form" do %>
         <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>"
-               class="form-control form-control-sm ft-input" style="width:160px" onchange="this.form.submit()">
+               class="form-control form-control-sm ft-input" style="width:160px" onchange="$(this.form).trigger('submit')">
       <% end %>
-      <%= link_to admin_reports_path, class: "btn btn-sm btn-outline-secondary" do %>
+      <%= link_to admin_reports_path, class: "btn btn-sm btn-outline-secondary js-pjax-link" do %>
         <i class="bi bi-arrow-left me-1"></i>Back
       <% end %>
     </div>
@@ -35,7 +35,7 @@
                 </div>
               </td>
               <td class="small text-muted"><%= order.user.email %></td>
-              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+              <td class="small"><%= order.items_label %></td>
               <td><span class="badge bg-light border text-dark font-monospace">#<%= order.token&.id.to_s.rjust(6,"0") %></span></td>
               <td><%= token_status_badge(order.token) %></td>
               <td class="small text-muted"><%= order.created_at.strftime("%I:%M %p") %></td>

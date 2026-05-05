@@ -1,67 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background:#f4f6f8; margin:0; padding:20px; }
-    .container { max-width:480px; margin:0 auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,.08); }
-    .header { background:linear-gradient(135deg,#1a7a4a,#0d5c36); padding:32px 24px; text-align:center; color:#fff; }
-    .logo { font-size:40px; margin-bottom:8px; }
-    .header h1 { font-size:22px; font-weight:700; margin:0; }
-    .body { padding:32px 24px; }
-    .cred-box { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px 20px; margin:16px 0; font-family:monospace; }
-    .cred-box .label { font-size:11px; text-transform:uppercase; color:#6b7280; font-family:sans-serif; }
-    .cred-box .value { font-size:16px; font-weight:700; color:#1a7a4a; letter-spacing:1px; }
-    .btn { display:inline-block; background:#1a7a4a; color:#fff; padding:14px 28px; border-radius:10px; text-decoration:none; font-weight:600; font-size:15px; margin:16px 0; }
-    .role-badge { display:inline-block; background:#e8f5ee; color:#1a7a4a; border:1px solid #c6e8d6; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:600; margin-bottom:16px; }
-    .footer { background:#f9fafb; padding:16px 24px; text-align:center; font-size:11px; color:#9ca3af; }
-    p { color:#374151; line-height:1.6; }
-    .warning { font-size:12px; color:#9ca3af; margin-top:16px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">🍽️</div>
-      <h1>Welcome to FoodToken!</h1>
-    </div>
-    <div class="body">
-      <p>Hi <strong><%= @user.name %></strong>,</p>
-      <p>Your account has been created on the <strong>FoodToken Smart Cafeteria System</strong>.</p>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-danger bg-gradient text-white text-center py-4 border-0">
+          <div class="display-6 fw-bold mb-2">CCube</div>
+          <h1 class="h4 fw-bold m-0">Welcome to Food Token!</h1>
+        </div>
+        
+        <div class="card-body p-4 bg-white">
+          <p class="text-dark">Hi <strong><%= @user.name %></strong>,</p>
+          <p class="text-dark">Your account has been created on the <strong>CCube Food Token System</strong>.</p>
 
-      <div class="role-badge">
-        <% if @user.employee? %>👤 Employee
-        <% elsif @user.vendor? %>🧑‍🍳 Vendor
-        <% else %>⚙️ Admin<% end %>
+          <div class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 mb-3 fs-6">
+            <% if @user.employee? %>👤 Employee
+            <% elsif @user.vendor? %>🧑‍🍳 Vendor
+            <% else %>⚙️ Admin<% end %>
+          </div>
+
+          <p class="text-dark"><strong>Your login credentials:</strong></p>
+
+          <div class="bg-light border rounded p-3 my-3 font-monospace">
+            <div class="text-uppercase text-secondary fw-bold small">Email</div>
+            <div class="fs-5 fw-bold text-danger mt-1"><%= @user.email %></div>
+          </div>
+
+          <div class="bg-light border rounded p-3 my-3 font-monospace">
+            <div class="text-uppercase text-secondary fw-bold small">Temporary Password</div>
+            <div class="fs-5 fw-bold text-danger mt-1"><%= @temp_password %></div>
+          </div>
+
+          <p class="text-danger small fw-bold">
+            ⚠️ You will be asked to change this password on your first login.
+          </p>
+
+          <div class="text-center my-4">
+            <a href="<%= @login_url %>" class="btn btn-danger btn-lg px-4 fw-bold rounded-3">🚀 Login Now</a>
+          </div>
+
+          <p class="text-secondary small mt-4 mb-0">
+            If you did not expect this email, please contact your system administrator immediately.
+          </p>
+        </div>
+        
+        <div class="card-footer bg-light text-center py-3 text-secondary small border-top">
+          © <%= Date.current.year %> CCube Food Token System. Secure Cafeteria Management.
+        </div>
       </div>
-
-      <p><strong>Your login credentials:</strong></p>
-
-      <div class="cred-box">
-        <div class="label">Email</div>
-        <div class="value"><%= @user.email %></div>
-      </div>
-
-      <div class="cred-box">
-        <div class="label">Temporary Password</div>
-        <div class="value"><%= @temp_password %></div>
-      </div>
-
-      <p style="font-size:13px;color:#e53e3e;font-weight:600;">
-        ⚠️ You will be asked to change this password on your first login.
-      </p>
-
-      <div style="text-align:center;">
-        <a href="<%= @login_url %>" class="btn">🚀 Login Now</a>
-      </div>
-
-      <p class="warning">
-        If you did not expect this email, please contact your system administrator immediately.
-      </p>
-    </div>
-    <div class="footer">
-      © <%= Date.current.year %> FoodToken System. Secure Cafeteria Management.
     </div>
   </div>
-</body>
-</html>
+</div>

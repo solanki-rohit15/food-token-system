@@ -2,13 +2,14 @@ class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :enforce_password_change!
+  before_action :expire_stale_tokens!, if: -> { user_signed_in? && current_user.employee? }
 
   rescue_from ActionController::InvalidAuthenticityToken, with: :handle_invalid_authenticity_token
 
   protected
 
   def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:account_update, keys: [:name, :phone])
+    devise_parameter_sanitizer.permit(:account_update, keys: [ :name, :phone ])
   end
 
   def after_sign_in_path_for(resource)
@@ -125,5 +126,13 @@ class ApplicationController < ActionController::Base
 
     redirect_to users_change_password_path,
                 alert: "Please set a new password before continuing."
+  end
+
+  # Bulk-expire any tokens past their expiry time — single UPDATE query.
+  # Called on every employee request so the UI always reflects true status.
+  def expire_stale_tokens!
+    Token.expire_stale!
+  rescue StandardError => e
+    Rails.logger.error("[expire_stale_tokens!] #{e.class}: #{e.message}")
   end
 end

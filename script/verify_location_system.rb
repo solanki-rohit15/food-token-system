@@ -3,7 +3,7 @@
 # Location System Verification Script
 # Run this to verify all components are properly set up
 #
-# Usage: 
+# Usage:
 #   cd /Users/abc/Desktop/rails-project/food-token-system
 #   ruby script/verify_location_system.rb
 

@@ -9,7 +9,6 @@ class Order < ApplicationRecord
   scope :this_month, -> { where(date: Date.current.beginning_of_month..Date.current.end_of_month) }
 
   validates :date,    presence: true
-  validates :user_id, uniqueness: { scope: :date, message: "already has an order for today" }
 
   before_validation :set_date
 
@@ -20,9 +19,14 @@ class Order < ApplicationRecord
 
   def total_items = order_items.count
 
-  def summary
-    food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ")
+  # Human-readable list of food items: "☕ Morning Tea, 🍱 Lunch"
+  # Pass separator: " · " for the bullet-separated style used in some views.
+  def items_label(separator: ", ")
+    food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(separator)
   end
+
+  # Alias kept for backward compat (Token delegates `summary` to order)
+  alias_method :summary, :items_label
 
   private
 

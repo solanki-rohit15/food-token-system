@@ -80,10 +80,10 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.perform_deliveries = true
 
-  
 
-  # Add your ngrok/tunnel host here when needed:
-  # config.hosts << ENV["NGROK_HOST"] if ENV["NGROK_HOST"].present?
+
+# Add your ngrok/tunnel host here when needed:
+# config.hosts << ENV["NGROK_HOST"] if ENV["NGROK_HOST"].present?
 
 # config.action_mailer.smtp_settings = {
 #   address:              ENV.fetch("SMTP_HOST",     "smtp.gmail.com"),

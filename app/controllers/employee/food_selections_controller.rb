@@ -1,22 +1,30 @@
 class Employee::FoodSelectionsController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_employee!
   before_action :check_location_access
-  before_action :redirect_if_already_ordered, only: [:new, :create]
+  before_action :redirect_if_already_ordered, only: [ :new, :create ]
 
   def new
-    @meal_settings     = MealSetting.all.index_by(&:meal_type)
-    @active_categories = FoodItem.active.ordered.index_by(&:category)
+    @meal_settings      = MealSetting.all.index_by(&:meal_type)
+    @active_categories  = FoodItem.active.ordered.index_by(&:category)
+    @ordered_categories = current_user.orders.today
+                                      .joins(:token, :food_items)
+                                      .where.not(tokens: { status: Token.statuses[:expired] })
+                                      .pluck('food_items.category').uniq
   end
 
   def create
+    previously_ordered = current_user.orders.today
+                                     .joins(:token, :food_items)
+                                     .where.not(tokens: { status: Token.statuses[:expired] })
+                                     .pluck('food_items.category')
     selected_categories = Array(params[:categories])
                             .map(&:to_s)
                             .uniq
                             .select { |c| FoodItem::CATEGORIES.key?(c) }
+                            .reject { |c| previously_ordered.include?(c) }
 
     if selected_categories.blank?
-      redirect_to new_employee_food_selection_path, alert: "Please select at least one meal."
+      redirect_to new_employee_food_selection_path, alert: "Please select at least one available meal that you haven't ordered yet today."
       return
     end
 
@@ -35,8 +43,14 @@ class Employee::FoodSelectionsController < ApplicationController
   private
 
   def redirect_if_already_ordered
-    if current_user.ordered_today?
-      redirect_to employee_tokens_path, notice: "You already have an order for today."
+    ordered_categories = current_user.orders.today
+                                     .joins(:token, :food_items)
+                                     .where.not(tokens: { status: Token.statuses[:expired] })
+                                     .pluck('food_items.category').uniq
+    available_categories = FoodItem.active.pluck(:category).uniq
+    
+    if available_categories.any? && ordered_categories.count >= available_categories.count
+      redirect_to employee_tokens_path, notice: "You have already ordered all available meals for today."
     end
   end
 
@@ -53,5 +67,4 @@ class Employee::FoodSelectionsController < ApplicationController
     end
     token
   end
-
 end

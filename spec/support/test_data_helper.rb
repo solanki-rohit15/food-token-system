@@ -39,7 +39,7 @@ module TestDataHelper
     end
   end
 
-  def create_order_with_token_for(user:, categories: ["breakfast"])
+  def create_order_with_token_for(user:, categories: [ "breakfast" ])
     create_food_items
     order = Order.create!(user: user, date: Date.current)
     categories.each do |cat|
@@ -48,7 +48,7 @@ module TestDataHelper
     end
     token = order.generate_token!
     token.update!(expires_at: 2.hours.from_now, status: :active)
-    [order, token]
+    [ order, token ]
   end
 end
 

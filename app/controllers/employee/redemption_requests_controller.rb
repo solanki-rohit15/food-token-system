@@ -1,5 +1,4 @@
 class Employee::RedemptionRequestsController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_employee!
   before_action :check_location_access
   before_action :set_request
@@ -14,8 +13,8 @@ class Employee::RedemptionRequestsController < ApplicationController
 
       broadcast_to_vendor("approved", all_redeemed: all_redeemed)
 
-      render json: { 
-        success: true, 
+      render json: {
+        success: true,
         all_redeemed: all_redeemed,
         request_id: @request.id,
         order_item_id: @request.order_item_id,
@@ -32,8 +31,8 @@ class Employee::RedemptionRequestsController < ApplicationController
 
     if @request.reject!
       broadcast_to_vendor("rejected")
-      
-      render json: { 
+
+      render json: {
         success: true,
         request_id: @request.id,
         order_item_id: @request.order_item_id,

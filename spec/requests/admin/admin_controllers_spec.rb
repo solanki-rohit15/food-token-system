@@ -64,7 +64,7 @@ RSpec.describe "Admin controllers", type: :request do
 
     it "renders report variants and csv export" do
       employee_user = create_user(role: :employee)
-      create_order_with_token_for(user: employee_user, categories: ["breakfast"])
+      create_order_with_token_for(user: employee_user, categories: [ "breakfast" ])
 
       get daily_admin_reports_path, params: { date: Date.current.to_s }
       expect(response).to have_http_status(:ok)

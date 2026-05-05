@@ -6,14 +6,14 @@
       <h2 class="ft-page-title mb-0">Users</h2>
       <p class="text-muted small mb-0"><%= @users.total_count %> records</p>
     </div>
-    <%= link_to new_admin_user_path, class: "btn ft-btn-primary btn-sm" do %>
+    <%= link_to new_admin_user_path, class: "btn ft-btn-primary btn-sm js-user-add-btn btn-fixed-xs" do %>
       <i class="bi bi-person-plus me-1"></i>Add User
     <% end %>
   </div>
 
   <div class="px-3 mb-3">
-    <%= form_tag admin_users_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
-      <input type="text" name="search" value="<%= params[:search] %>"
+    <%= form_tag admin_users_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center js-users-search-form" do %>
+      <input type="text" name="search" id="users-search-input" value="<%= params[:search] %>"
              class="form-control form-control-sm ft-input" placeholder="Search name or email…"
              style="width:200px">
       <select name="role" class="form-select form-select-sm ft-input" style="width:130px">
@@ -26,14 +26,14 @@
         <option value="true"  <%= "selected" if params[:active]=="true"  %>>Active</option>
         <option value="false" <%= "selected" if params[:active]=="false" %>>Inactive</option>
       </select>
-      <button type="submit" class="btn btn-sm ft-btn-primary">
+      <button type="submit" class="btn btn-sm ft-btn-primary btn-fixed-xs">
         <i class="bi bi-search me-1"></i>Search
       </button>
-      <%= link_to "Clear", admin_users_path, class: "btn btn-sm btn-outline-secondary" %>
+      <%= link_to "Clear", admin_users_path, class: "btn btn-sm btn-outline-secondary js-users-clear-btn btn-fixed-xs" %>
     <% end %>
   </div>
 
-  <div class="px-3">
+  <div class="px-3" id="users-list-container">
     <div class="table-responsive">
       <table class="table ft-table align-middle">
         <thead class="table-light">
@@ -62,7 +62,7 @@
               </td>
               <td>
                 <div class="d-flex gap-1">
-                  <%= link_to "View", admin_user_path(user), class: "btn btn-sm btn-outline-secondary" %>
+                  <%= link_to "View", admin_user_path(user), class: "btn btn-sm btn-outline-secondary js-user-view-btn" %>
                   <%= link_to "Edit", edit_admin_user_path(user), class: "btn btn-sm btn-outline-primary" %>
                   <%= button_to user.active? ? "Deactivate" : "Activate",
                         toggle_active_admin_user_path(user), method: :patch,
@@ -93,3 +93,5 @@
     <% end %>
   </div>
 </div>
+
+

@@ -5,7 +5,7 @@ class CreateOrders < ActiveRecord::Migration[8.1]
       t.date       :date, null: false
       t.timestamps
     end
-    add_index :orders, [:user_id, :date], unique: true
+    add_index :orders, [ :user_id, :date ], unique: true
     add_index :orders, :date
   end
 end

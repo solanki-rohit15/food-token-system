@@ -1,38 +1,42 @@
 <% content_for :title, "Tokens — FoodToken" %>
 
-<div class="ft-page pb-5">
+<div class="ft-page pb-5" id="vendor-tokens-page">
   <div class="ft-page-header px-3 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
       <h2 class="ft-page-title mb-0">All Tokens</h2>
-      <p class="text-muted small mb-0">
+      <p class="text-muted small mb-0" id="tokens-date-label">
         <%= @date == Date.current ? "Today" : @date.strftime("%A, %d %B %Y") %>
         &bull; <%= @tokens.total_count %> records
       </p>
     </div>
-    <%= link_to vendor_scan_path, class: "btn ft-btn-primary btn-sm" do %>
-      <i class="bi bi-qr-code-scan me-1"></i>Scan QR
-    <% end %>
+
   </div>
 
+  <%# Filter row — all AJAX, no page submit %>
   <div class="px-3 mb-3">
-    <%= form_tag vendor_tokens_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
-      <input type="date" name="date" value="<%= @date %>"
-             max="<%= Date.current %>"
-             class="form-control form-control-sm ft-input ft-filter-date">
-      <select name="status" class="form-select form-select-sm ft-input ft-filter-status">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <input type="date" id="token-date-picker"
+             value="<%= @date %>" max="<%= Date.current %>"
+             class="form-control form-control-sm ft-input ft-filter-control"
+             style="width:150px">
+      <select id="token-status-select" class="form-select form-select-sm ft-input ft-filter-control" style="width:140px">
         <option value="">All Status</option>
-        <option value="active"   <%= "selected" if params[:status]=="active"   %>>Active</option>
-        <option value="redeemed" <%= "selected" if params[:status]=="redeemed" %>>Redeemed</option>
-        <option value="expired"  <%= "selected" if params[:status]=="expired"  %>>Expired</option>
+        <option value="active"   <%= "selected" if params[:status] == "active"   %>>Active</option>
+        <option value="redeemed" <%= "selected" if params[:status] == "redeemed" %>>Redeemed</option>
+        <option value="expired"  <%= "selected" if params[:status] == "expired"  %>>Expired</option>
       </select>
-      <input type="text" name="search" value="<%= params[:search] %>"
-             class="form-control form-control-sm ft-input ft-filter-search"
-             placeholder="Name, email or token no.">
-      <button type="submit" class="btn btn-sm ft-btn-primary">
+      <input type="text" id="token-search"
+             value="<%= params[:search] %>"
+             class="form-control form-control-sm ft-input ft-filter-control"
+             placeholder="Name, email or token no."
+             style="width:200px">
+      <button id="btn-filter-tokens" class="btn btn-sm ft-btn-primary ft-dashboard-btn">
         <i class="bi bi-search me-1"></i>Filter
       </button>
-      <%= link_to "Today", vendor_tokens_path, class: "btn btn-sm btn-outline-secondary" %>
-    <% end %>
+      <button id="btn-today-tokens" class="btn btn-sm btn-outline-secondary ft-dashboard-btn">
+        Today
+      </button>
+    </div>
   </div>
 
   <div class="px-3">
@@ -48,7 +52,7 @@
             <th>Action</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="tokens-tbody">
           <% @tokens.each do |token| %>
             <tr>
               <td>
@@ -60,15 +64,12 @@
                   </div>
                 </div>
               </td>
-              <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
-              <td>
-                <span class="badge bg-light border text-dark font-monospace"><%= token.token_number %></span>
-              </td>
+              <td class="small"><%= token.order.items_label %></td>
+              <td><span class="badge bg-light border text-dark font-monospace"><%= token.token_number %></span></td>
               <td class="small text-muted"><%= token.created_at.strftime("%I:%M %p") %></td>
               <td><%= token_status_badge(token) %></td>
               <td>
-                <%# Only "View" — per-item redemption happens inside the show page or scanner %>
-                <%= link_to "View", vendor_token_path(token), class: "btn btn-sm btn-outline-secondary" %>
+                <%= link_to "View", vendor_token_path(token), class: "btn btn-sm btn-outline-secondary ft-dashboard-btn" %>
               </td>
             </tr>
           <% end %>
@@ -88,3 +89,4 @@
     <% end %>
   </div>
 </div>
+

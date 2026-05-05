@@ -34,7 +34,7 @@ RSpec.describe "Vendor controllers", type: :request do
     end
 
     it "verifies scanner payload successfully for token qr data" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
       post vendor_verify_scan_path, params: { qr_data: token.qr_payload }, as: :json
 
       expect(response).to have_http_status(:ok)
@@ -45,7 +45,7 @@ RSpec.describe "Vendor controllers", type: :request do
     end
 
     it "returns unprocessable for expired token in scanner verify" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
       token.update!(expires_at: 1.minute.ago)
 
       post vendor_verify_scan_path, params: { qr_data: token.qr_payload }, as: :json
@@ -54,7 +54,7 @@ RSpec.describe "Vendor controllers", type: :request do
     end
 
     it "sends redemption request for valid order_item" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
       order_item = token.order.order_items.first
 
       post send_redemption_request_vendor_token_path(token), params: { order_item_id: order_item.id }, as: :json
@@ -63,7 +63,7 @@ RSpec.describe "Vendor controllers", type: :request do
     end
 
     it "returns unprocessable when token is not redeemable" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
       token.update!(status: :expired)
       order_item = token.order.order_items.first
 
@@ -72,7 +72,7 @@ RSpec.describe "Vendor controllers", type: :request do
     end
 
     it "returns unprocessable when pending request already exists for item" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
       order_item = token.order.order_items.first
       RedemptionRequest.create!(token: token, order_item: order_item, vendor: vendor, status: :pending)
 
@@ -81,7 +81,7 @@ RSpec.describe "Vendor controllers", type: :request do
     end
 
     it "returns not_found for wrong order_item in redemption request" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
 
       post send_redemption_request_vendor_token_path(token), params: { order_item_id: 999_999 }, as: :json
       expect(response).to have_http_status(:not_found)

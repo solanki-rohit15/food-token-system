@@ -7,20 +7,20 @@
 
   <%# Date picker filter %>
   <div class="px-3 mb-3">
-    <%= form_tag admin_reports_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
+    <%= form_tag admin_reports_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center js-pjax-form" do %>
       <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>"
              class="form-control form-control-sm ft-input" style="width:160px">
-      <button type="submit" class="btn btn-sm ft-btn-primary">
+      <button type="submit" class="btn btn-sm ft-btn-primary btn-fixed-sm">
         <i class="bi bi-filter me-1"></i>Filter
       </button>
       <div class="ms-auto d-flex gap-2">
-        <%= link_to daily_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-secondary" do %>
+        <%= link_to daily_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-secondary js-pjax-link" do %>
           <i class="bi bi-calendar-day me-1"></i>Daily
         <% end %>
-        <%= link_to monthly_admin_reports_path, class: "btn btn-sm btn-outline-secondary" do %>
+        <%= link_to monthly_admin_reports_path, class: "btn btn-sm btn-outline-secondary js-pjax-link" do %>
           <i class="bi bi-calendar-month me-1"></i>Monthly
         <% end %>
-        <%= link_to employee_wise_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-secondary" do %>
+        <%= link_to employee_wise_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-secondary js-pjax-link" do %>
           <i class="bi bi-people me-1"></i>By Employee
         <% end %>
         <%= link_to export_admin_reports_path(date: @date), class: "btn btn-sm btn-outline-success" do %>
@@ -67,7 +67,6 @@
         <thead class="table-light">
           <tr>
             <th>Employee</th>
-            <th>Department</th>
             <th>Items</th>
             <th>Token</th>
             <th>Status</th>
@@ -86,8 +85,8 @@
                   </div>
                 </div>
               </td>
-              <td class="small text-muted"><%= token.user.employee_profile&.department || "—" %></td>
-              <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+
+              <td class="small"><%= token.order.items_label %></td>
               <td><span class="badge bg-light border text-dark font-monospace">#<%= token.id.to_s.rjust(6,"0") %></span></td>
               <td><%= token_status_badge(token) %></td>
               <td class="small text-muted"><%= token.redeemed_at&.strftime("%I:%M %p") || "—" %></td>

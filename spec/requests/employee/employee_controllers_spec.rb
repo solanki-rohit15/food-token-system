@@ -38,14 +38,14 @@ RSpec.describe "Employee controllers", type: :request do
         setting.save!
       end
 
-      post employee_food_selections_path, params: { categories: ["breakfast"] }
+      post employee_food_selections_path, params: { categories: [ "breakfast" ] }
       token = Token.joins(:order).where(orders: { user_id: employee.id }).last
       expect(token).to be_present
       expect(response).to redirect_to(employee_token_path(token))
     end
 
     it "returns token status json" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
       get status_employee_token_path(token), as: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)["token_status"]).to be_present
@@ -53,14 +53,14 @@ RSpec.describe "Employee controllers", type: :request do
 
     it "redirects when employee requests token they do not own" do
       other_employee = create_user(role: :employee)
-      _, other_token = create_order_with_token_for(user: other_employee, categories: ["lunch"])
+      _, other_token = create_order_with_token_for(user: other_employee, categories: [ "lunch" ])
 
       get employee_token_path(other_token)
       expect(response).to redirect_to(employee_tokens_path)
     end
 
     it "approves and rejects redemption requests" do
-      _, token = create_order_with_token_for(user: employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: employee, categories: [ "lunch" ])
       req = RedemptionRequest.create!(token: token, order_item: token.order.order_items.first, vendor: vendor, status: :pending)
 
       post approve_employee_redemption_request_path(req), as: :json
@@ -75,7 +75,7 @@ RSpec.describe "Employee controllers", type: :request do
 
     it "returns not found for redemption request not owned by employee" do
       other_employee = create_user(role: :employee)
-      _, token = create_order_with_token_for(user: other_employee, categories: ["lunch"])
+      _, token = create_order_with_token_for(user: other_employee, categories: [ "lunch" ])
       req = RedemptionRequest.create!(token: token, order_item: token.order.order_items.first, vendor: vendor, status: :pending)
 
       post approve_employee_redemption_request_path(req), as: :json

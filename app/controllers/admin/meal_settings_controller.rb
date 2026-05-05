@@ -1,5 +1,4 @@
 class Admin::MealSettingsController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
 
   def index
@@ -38,19 +37,21 @@ class Admin::MealSettingsController < ApplicationController
   def build_settings_from_params
     meal_settings_params.to_h.filter_map do |mt, attrs|
       next unless MealSetting::MEAL_TYPES.include?(mt)
-  
+
       setting = MealSetting.find_by!(meal_type: mt)
-  
+
       setting.start_time = parse_time(attrs[:start_time]) || setting.start_time
       setting.end_time   = parse_time(attrs[:end_time])   || setting.end_time
       setting.price      = attrs[:price].to_f
-  
+
       setting
     end
   end
-  
+
   def meal_settings_params
-    params.require(:meal_settings).permit!
+    params.require(:meal_settings).permit(
+      **MealSetting::MEAL_TYPES.index_with { [ :start_time, :end_time, :price ] }
+    )
   end
 
   def collect_validation_errors(settings)

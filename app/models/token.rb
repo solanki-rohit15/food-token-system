@@ -7,14 +7,17 @@ class Token < ApplicationRecord
 
   enum :status, { active: 0, redeemed: 1, expired: 2 }
 
-  TOKEN_VALID_UNTIL = "18:00"
+  TOKEN_EXPIRY_HOURS = 6  # tokens expire 6 hours after generation
 
   before_validation :ensure_token_number, on: :create
+  before_validation :ensure_public_token, on: :create
   before_create     :set_expiry
+  after_create      :generate_signed_payload!
 
   validates :token_number, presence: true, uniqueness: true
+  validates :public_token, uniqueness: true, allow_nil: true
 
-  # ── Scopes ─────────────────────────────────────────────────────────
+
   scope :today,      -> { joins(:order).where(orders: { date: Date.current }) }
   scope :this_month, -> { joins(:order).where(orders: { date: Date.current.beginning_of_month..Date.current.end_of_month }) }
   scope :for_user,   ->(user) { joins(:order).where(orders: { user_id: user.id }) }
@@ -28,31 +31,49 @@ class Token < ApplicationRecord
 
   delegate :user, :food_items, :summary, to: :order
 
-  # ── QR ──────────────────────────────────────────────────────────────
-  def qr_svg
-    RQRCode::QRCode.new(qr_payload).as_svg(
-      offset: 0, color: "000", shape_rendering: "crispEdges",
-      module_size: 6, standalone: true, use_path: true
-    )
-  end
 
-  def qr_payload
-    { token: token_number, id: id, exp: expires_at.to_i }.to_json
-  end
-
-  # ── Status ──────────────────────────────────────────────────────────
   def expired_by_time? = expires_at.present? && expires_at < Time.current
   def expired?         = status == "expired" || expired_by_time?
   def redeemable?      = active? && !expired_by_time?
   def pending_request? = redemption_requests.pending.exists?
   def fully_redeemed?  = status == "redeemed"
 
-  # SQL-based counts — no Ruby iteration over all items
-  def redeemed_items_count  = order.order_items.where.not(redeemed_at: nil).count
-  def pending_items_count   = order.order_items.where(redeemed_at: nil).count
-  def partially_redeemed?   = active? && redeemed_items_count > 0
+  def redeemed_items_count = order.order_items.count { |oi| oi.redeemed_at.present? }
+  def pending_items_count  = order.order_items.count { |oi| oi.redeemed_at.nil? }
+  def partially_redeemed?  = active? && redeemed_items_count > 0
 
-  # ── QR lookup ───────────────────────────────────────────────────────
+
+  def status_payload
+    order_items_data = order.order_items.includes(:food_item).map do |oi|
+      {
+        item_code:      oi.item_code,
+        category:       oi.food_item.category,
+        category_label: oi.food_item.category_label,
+        redeemed:       oi.redeemed?,
+        redeemed_at:    oi.redeemed_at&.strftime("%I:%M %p")
+      }
+    end
+
+    pending = redemption_requests
+                    .pending
+                    .includes(:vendor, order_item: :food_item)
+                    .map do |req|
+      { id: req.id, vendor_name: req.vendor.name,
+        category: req.order_item.food_item.category_label,
+        item_code: req.order_item.item_code }
+    end
+
+    {
+      token_status:       status,
+      fully_redeemed:     fully_redeemed?,
+      partially_redeemed: partially_redeemed?,
+      expired:            expired?,
+      order_items:        order_items_data,
+      pending_requests:   pending
+    }
+  end
+
+
   def self.find_by_qr(data)
     parsed = JSON.parse(data.to_s)
     find_by(token_number: parsed["token"]) || find_by(id: parsed["id"])
@@ -60,18 +81,18 @@ class Token < ApplicationRecord
     find_by(token_number: data.strip)
   end
 
-  # Called only by RedemptionRequest after all items finalized
   def redeem!(vendor_user = nil)
     return false if redeemed?
     update!(status: :redeemed, redeemed_at: Time.current, redeemed_by_id: vendor_user&.id)
   end
 
   def self.expire_stale!
-    where(status: :active).where("expires_at < ?", Time.current).update_all(status: statuses[:expired], updated_at: Time.current)
+    where(status: :active).where("expires_at < ?", Time.current)
+      .update_all(status: statuses[:expired], updated_at: Time.current)
   end
 
-  def self.expiry_time_for(date)
-    Time.zone.parse("#{date} #{TOKEN_VALID_UNTIL}")
+  def self.expiry_time_for(_date = nil)
+    Time.current + TOKEN_EXPIRY_HOURS.hours
   end
 
   private
@@ -83,7 +104,26 @@ class Token < ApplicationRecord
     end
   end
 
+  def ensure_public_token
+    self.public_token ||= loop do
+      pt = QR::Signer.generate_public_token
+      break pt unless Token.exists?(public_token: pt)
+    end
+  end
+
   def set_expiry
-    self.expires_at ||= self.class.expiry_time_for(Date.current)
+    self.expires_at ||= Time.current + self.class::TOKEN_EXPIRY_HOURS.hours
+  end
+
+  # After create: generate and store the signed payload
+  def generate_signed_payload!
+    payload = {
+      type:         "token",
+      record_id:    id,
+      public_token: public_token,
+      token_number: token_number,
+      issued_at:    Time.current.to_i
+    }
+    update_column(:signed_payload, QR::Signer.sign(payload))
   end
 end

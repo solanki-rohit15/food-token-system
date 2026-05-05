@@ -12,22 +12,29 @@
   </div>
 
   <div class="px-3 mb-3">
-    <%= form_tag admin_tokens_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center" do %>
-      <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>"
-             class="form-control form-control-sm ft-input" style="width:160px">
-      <select name="status" class="form-select form-select-sm ft-input" style="width:140px">
-        <option value="">All Status</option>
-        <option value="active"   <%= "selected" if params[:status]=="active"   %>>Active</option>
-        <option value="redeemed" <%= "selected" if params[:status]=="redeemed" %>>Redeemed</option>
-        <option value="expired"  <%= "selected" if params[:status]=="expired"  %>>Expired</option>
-      </select>
-      <input type="text" name="search" value="<%= params[:search] %>"
-             class="form-control form-control-sm ft-input" placeholder="Search employee..."
-             style="width:180px">
-      <button type="submit" class="btn btn-sm ft-btn-primary">
-        <i class="bi bi-search me-1"></i>Filter
-      </button>
-      <%= link_to "Today", admin_tokens_path, class: "btn btn-sm btn-outline-secondary" %>
+    <%= form_tag admin_tokens_path, method: :get, class: "row g-2 align-items-center js-pjax-form" do %>
+      <div class="col-6 col-md-auto">
+        <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>" class="form-control form-control-sm ft-input">
+      </div>
+      <div class="col-6 col-md-auto">
+        <select name="status" class="form-select form-select-sm ft-input">
+          <option value="">All Status</option>
+          <option value="active"   <%= "selected" if params[:status]=="active"   %>>Active</option>
+          <option value="redeemed" <%= "selected" if params[:status]=="redeemed" %>>Redeemed</option>
+          <option value="expired"  <%= "selected" if params[:status]=="expired"  %>>Expired</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-auto flex-grow-1">
+        <input type="text" name="search" value="<%= params[:search] %>" class="form-control form-control-sm ft-input" placeholder="Search employee...">
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm ft-btn-primary btn-fixed-sm">
+          <i class="bi bi-search me-1"></i>Filter
+        </button>
+      </div>
+      <div class="col-auto">
+        <%= link_to "Today", admin_tokens_path, class: "btn btn-sm btn-outline-secondary js-pjax-link btn-fixed-sm" %>
+      </div>
     <% end %>
   </div>
 
@@ -36,7 +43,7 @@
       <table class="table ft-table align-middle">
         <thead class="table-light">
           <tr>
-            <th>Employee</th><th>Dept</th><th>Items</th><th>Token</th>
+            <th>Employee</th><th>Items</th><th>Token</th>
             <th>Created</th><th>Status</th><th>Redeemed At</th>
           </tr>
         </thead>
@@ -52,8 +59,8 @@
                   </div>
                 </div>
               </td>
-              <td class="small text-muted"><%= token.user.employee_profile&.department || "—" %></td>
-              <td class="small"><%= token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+
+              <td class="small"><%= token.order.items_label %></td>
               <td><span class="badge bg-light border text-dark font-monospace">#<%= token.id.to_s.rjust(6,"0") %></span></td>
               <td class="small text-muted"><%= token.created_at.strftime("%I:%M %p") %></td>
               <td><%= token_status_badge(token) %></td>

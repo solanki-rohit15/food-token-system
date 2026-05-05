@@ -13,10 +13,11 @@
       </div>
       <div>
         <div class="ft-greeting">Good <%= time_of_day_greeting %>, <%= current_user.name.split.first %>!</div>
-        <div class="ft-emp-dept small">
-          <%= current_user.employee_profile&.department || "Employee" %>
+        <div class="ft-emp-id small">
           <% if current_user.employee_profile&.employee_id.present? %>
-            &bull; <%= current_user.employee_profile.employee_id %>
+            ID: <%= current_user.employee_profile.employee_id %>
+          <% else %>
+            Employee
           <% end %>
         </div>
       </div>
@@ -29,43 +30,95 @@
     </div>
   </div>
 
-  <%# Today's token or CTA %>
-  <% if @active_token %>
+  <%# Today's tokens or CTA %>
+  <% if @active_today_tokens.any? %>
     <div class="ft-section px-3 mt-3">
-      <div class="ft-section-label">Today's Token</div>
-      <div class="ft-token-hero-card">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <div>
-            <div class="ft-token-number">Token #<%= @active_token.id.to_s.rjust(6, "0") %></div>
-            <div class="ft-token-items mt-1 text-muted small">
-              <%= @active_token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(" · ") %>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="ft-section-label mb-0">Today's Tokens</div>
+        <% remaining = FoodItem::CATEGORIES.keys.map(&:to_s) - @ordered_categories %>
+        <% any_open  = remaining.any? { |c| @food_by_cat[c]&.first&.available_now? } %>
+        <% if any_open %>
+          <%= link_to new_employee_food_selection_path, class: "btn btn-sm ft-btn-primary" do %>
+            <i class="bi bi-plus-circle me-1"></i>Add Meal
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="d-flex flex-column gap-2">
+        <% @active_today_tokens.each do |token| %>
+          <div class="ft-token-hero-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div class="ft-token-number">Token #<%= token.id.to_s.rjust(6, "0") %></div>
+                <div class="ft-token-items mt-1 text-muted small">
+                  <%= token.order.items_label(separator: " · ") %>
+                </div>
+              </div>
+              <% if token.active? %>
+                <span class="ft-status-badge ft-status-active">
+                  <span class="ft-status-dot"></span> Active
+                </span>
+              <% elsif token.redeemed? %>
+                <span class="badge bg-success">Redeemed</span>
+              <% else %>
+                <span class="badge bg-secondary">Expired</span>
+              <% end %>
             </div>
+            <div class="ft-token-expiry text-muted small">
+              <i class="bi bi-clock me-1"></i>
+              Expires at <%= token.expires_at.strftime("%I:%M %p") %>
+            </div>
+            <%= link_to employee_token_path(token), class: "btn ft-btn-qr w-100 mt-3" do %>
+              <i class="bi bi-qr-code me-2"></i>Show QR Code
+            <% end %>
           </div>
-          <span class="ft-status-badge ft-status-active">
-            <span class="ft-status-dot"></span> Active
-          </span>
-        </div>
-        <div class="ft-token-expiry text-muted small">
-          <i class="bi bi-clock me-1"></i>
-          Expires at <%= @active_token.expires_at.strftime("%I:%M %p") %>
-        </div>
-        <%= link_to employee_token_path(@active_token), class: "btn ft-btn-qr w-100 mt-3" do %>
-          <i class="bi bi-qr-code me-2"></i>Show QR Code
         <% end %>
       </div>
     </div>
+
   <% else %>
+    <%# All tokens are expired or no tokens yet — show Select Meals CTA %>
     <div class="ft-section px-3 mt-3">
       <div class="ft-section-label">Today's Meal</div>
       <div class="ft-no-token-card">
         <div class="ft-no-token-icon">🍽️</div>
-        <h3 class="ft-no-token-title">No token yet today</h3>
-        <p class="text-muted small">Select your meals to generate a QR token</p>
+        <% if @expired_today_tokens.any? %>
+          <h3 class="ft-no-token-title">Your token has expired</h3>
+          <p class="text-muted small">Tokens are valid for <%= Token::TOKEN_EXPIRY_HOURS %> hours from generation. You can generate a new one for remaining open meals.</p>
+        <% else %>
+          <h3 class="ft-no-token-title">No token yet today</h3>
+          <p class="text-muted small">Select your meals to generate a QR token</p>
+        <% end %>
         <%= link_to new_employee_food_selection_path, class: "btn cc-btn-primary mt-2" do %>
           <i class="bi bi-plus-circle me-2"></i>Select Meals
         <% end %>
       </div>
     </div>
+
+    <%# Show today's expired tokens as collapsed history (not CTA-blocking) %>
+    <% if @expired_today_tokens.any? %>
+      <div class="ft-section px-3 mt-3">
+        <div class="ft-section-label text-muted">Expired Today</div>
+        <div class="d-flex flex-column gap-2">
+          <% @expired_today_tokens.each do |token| %>
+            <div class="ft-token-hero-card opacity-60">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <div class="ft-token-number">Token #<%= token.id.to_s.rjust(6, "0") %></div>
+                  <div class="ft-token-items mt-1 text-muted small">
+                    <%= token.order.items_label(separator: " · ") %>
+                  </div>
+                </div>
+                <span class="badge bg-secondary">Expired</span>
+              </div>
+              <div class="text-muted small">
+                <i class="bi bi-clock me-1"></i>Expired at <%= token.expires_at.strftime("%I:%M %p") %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   <% end %>
 
   <%# Meal availability status %>

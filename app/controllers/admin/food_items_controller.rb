@@ -1,7 +1,6 @@
 class Admin::FoodItemsController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
-  before_action :set_food_item, only: [:destroy, :toggle_active]
+  before_action :set_food_item, only: [ :destroy, :toggle_active ]
 
   def index
     existing = FoodItem.all.index_by(&:category)
@@ -37,7 +36,7 @@ class Admin::FoodItemsController < ApplicationController
 
   def toggle_active
     @food_item.update!(active: !@food_item.active?)
-  
+
     render json: {
       success: true,
       id: @food_item.id,

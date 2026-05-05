@@ -1,5 +1,4 @@
 class Admin::TokensController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
 
   def index
@@ -12,8 +11,8 @@ class Admin::TokensController < ApplicationController
 
   def show
     @token    = Token.includes(
-                  order: [:user, { order_items: [:food_item, :redeemed_by,
-                                                  { redemption_requests: :vendor }] }]
+                  order: [ :user, { order_items: [ :food_item, :redeemed_by,
+                                                  { redemption_requests: :vendor } ] } ]
                 ).find(params[:id])
     @order    = @token.order
     @employee = @order.user
@@ -23,7 +22,7 @@ class Admin::TokensController < ApplicationController
 
   def base_tokens_scope
     Token.for_date(@date)
-         .includes(order: [:user, { order_items: :food_item }, :food_items])
+         .includes(order: [ :user, { order_items: :food_item }, :food_items ])
          .order(created_at: :desc)
   end
 

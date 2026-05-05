@@ -9,7 +9,7 @@
     <div class="table-responsive">
       <table class="table ft-table align-middle">
         <thead class="table-light">
-          <tr><th>Employee</th><th>Department</th><th>Items</th><th>Token Status</th></tr>
+          <tr><th>Employee</th><th>Items</th><th>Token Status</th></tr>
         </thead>
         <tbody>
           <% @employees.each do |emp| %>
@@ -25,13 +25,12 @@
                   </div>
                 </div>
               </td>
-              <td class="small text-muted"><%= emp.employee_profile&.department || "—" %></td>
-              <td class="small"><%= order.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", ") %></td>
+              <td class="small"><%= order.items_label %></td>
               <td><%= token_status_badge(order.token) %></td>
             </tr>
           <% end %>
           <% if @employees.none? { |e| e.orders.today.exists? } %>
-            <tr><td colspan="4" class="text-center text-muted py-4">No employees ordered today.</td></tr>
+            <tr><td colspan="3" class="text-center text-muted py-4">No employees ordered today.</td></tr>
           <% end %>
         </tbody>
       </table>

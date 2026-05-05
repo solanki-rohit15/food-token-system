@@ -1,7 +1,6 @@
 class Admin::UsersController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
-  before_action :set_user, only: [:show, :edit, :update, :destroy, :toggle_active, :resend_invitation]
+  before_action :set_user, only: [ :show, :edit, :update, :destroy, :toggle_active, :resend_invitation ]
 
   def index
     @users = User.where.not(role: :admin)
@@ -11,6 +10,26 @@ class Admin::UsersController < ApplicationController
     @users = @users.where(active: params[:active] == "true")  if params[:active].present?
     @users = apply_user_search(@users)                         if params[:search].present?
     @users = @users.page(params[:page]).per(20)
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          users: @users.map do |u|
+            {
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              initials: u.initials,
+              role: u.role,
+              active: u.active?,
+              must_change_password: u.must_change_password?
+            }
+          end,
+          total: @users.total_count
+        }
+      end
+    end
   end
 
   def show
@@ -18,44 +37,72 @@ class Admin::UsersController < ApplicationController
                           .includes(order: :food_items)
                           .order(created_at: :desc)
                           .limit(10)
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          user: @user.as_json(only: [:id, :name, :email, :phone, :role]),
+          initials: @user.initials,
+          active: @user.active?,
+          department: @user.employee_profile&.department,
+          employee_id: @user.employee_profile&.employee_id,
+          tokens: @recent_tokens.map do |token|
+            {
+              date:         token.order.date.strftime("%d %b %Y"),
+              items:        token.order.items_label,
+              token_number: token.token_number,
+              status:       token.status
+            }
+          end
+        }
+      end
+    end
   end
 
   def new
     @user = User.new(role: :employee)
   end
 
-def create
-  temp_password = Devise.friendly_token[0, 12]
+  def create
+    temp_password = Devise.friendly_token[0, 12]
 
-  @user = User.new(user_params.merge(
-    password:              temp_password,
-    password_confirmation: temp_password,
-    confirmed_at:          Time.current,
-    admin_created:         true,
-    must_change_password:  true
-  ))
+    @user = User.new(user_params.merge(
+      password:              temp_password,
+      password_confirmation: temp_password,
+      confirmed_at:          Time.current,
+      admin_created:         true,
+      must_change_password:  true
+    ))
 
-  if @user.save
-    UserMailer.invitation_email(@user, temp_password).deliver_later
+    if @user.save
+      UserMailer.invitation_email(@user, temp_password).deliver_later
 
-    redirect_to admin_users_path,
-                notice: "#{@user.name} created. Login credentials sent by email."
-  else
-    flash.now[:alert] = @user.errors.full_messages.to_sentence
-    render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { redirect_to admin_users_path, notice: "#{@user.name} created. Login credentials sent by email." }
+        format.json { render json: { success: true, message: "#{@user.name} created. Login credentials sent by email." } }
+      end
+    else
+      respond_to do |format|
+        format.html do
+          flash.now[:alert] = @user.errors.full_messages.to_sentence
+          render :new, status: :unprocessable_entity
+        end
+        format.json { render json: { success: false, message: @user.errors.full_messages.to_sentence }, status: :unprocessable_entity }
+      end
+    end
   end
-end
 
   def edit; end
-  
-def update
-  if @user.update(update_user_params)
-    redirect_to admin_users_path, notice: "User updated successfully."
-  else
-    flash.now[:alert] = @user.errors.full_messages.to_sentence
-    render :edit, status: :unprocessable_entity
+
+  def update
+    if @user.update(update_user_params)
+      redirect_to admin_users_path, notice: "User updated successfully."
+    else
+      flash.now[:alert] = @user.errors.full_messages.to_sentence
+      render :edit, status: :unprocessable_entity
+    end
   end
-end
 
   def destroy
     if @user == current_user

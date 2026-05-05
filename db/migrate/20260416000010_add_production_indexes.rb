@@ -1,7 +1,7 @@
 class AddProductionIndexes < ActiveRecord::Migration[8.1]
   def change
     # Speeds up Token expiry queries (expired? checks expires_at + status)
-    add_index :tokens, [:status, :expires_at],
+    add_index :tokens, [ :status, :expires_at ],
               name: "index_tokens_on_status_and_expires_at",
               if_not_exists: true
 
@@ -11,7 +11,7 @@ class AddProductionIndexes < ActiveRecord::Migration[8.1]
               if_not_exists: true
 
     # Speeds up pending redemption checks per order_item
-    add_index :redemption_requests, [:order_item_id, :status],
+    add_index :redemption_requests, [ :order_item_id, :status ],
               name: "index_redemption_requests_on_order_item_id_and_status",
               if_not_exists: true
 

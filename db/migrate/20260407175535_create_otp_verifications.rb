@@ -8,6 +8,6 @@ class CreateOtpVerifications < ActiveRecord::Migration[8.1]
       t.datetime   :verified_at
       t.timestamps
     end
-    add_index :otp_verifications, [:user_id, :verified]
+    add_index :otp_verifications, [ :user_id, :verified ]
   end
 end

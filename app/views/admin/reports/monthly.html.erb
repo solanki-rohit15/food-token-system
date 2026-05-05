@@ -6,14 +6,14 @@
       <p class="text-muted small mb-0"><%= @month_start.strftime("%B %Y") %></p>
     </div>
     <div class="d-flex gap-2 align-items-center">
-      <%= form_tag monthly_admin_reports_path, method: :get, class: "d-flex gap-2" do %>
+      <%= form_tag monthly_admin_reports_path, method: :get, class: "d-flex gap-2 js-pjax-form" do %>
         <input type="month" name="month_start" value="<%= @month_start.strftime('%Y-%m') %>"
-               class="form-control form-control-sm ft-input" style="width:160px" onchange="this.form.submit()">
+               class="form-control form-control-sm ft-input" style="width:160px" onchange="$(this.form).trigger('submit')">
       <% end %>
       <%= link_to export_monthly_admin_reports_path(month_start: @month_start.strftime("%Y-%m")), class: "btn btn-sm btn-outline-success" do %>
         <i class="bi bi-download me-1"></i>CSV
       <% end %>
-      <%= link_to admin_reports_path, class: "btn btn-sm btn-outline-secondary" do %><i class="bi bi-arrow-left me-1"></i>Back<% end %>
+      <%= link_to admin_reports_path, class: "btn btn-sm btn-outline-secondary js-pjax-link" do %><i class="bi bi-arrow-left me-1"></i>Back<% end %>
     </div>
   </div>
 
@@ -21,25 +21,25 @@
     <div class="row g-2">
       <div class="col-6 col-md-3">
         <div class="ft-stat-card">
-          <div class="ft-stat-val"><%= @orders.count %></div>
+          <div class="ft-stat-val"><%= @monthly_counts[:total] %></div>
           <div class="ft-stat-label">Total Orders</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="ft-stat-card">
-          <div class="ft-stat-val text-success"><%= @orders.select { |o| o.token&.redeemed? }.count %></div>
+          <div class="ft-stat-val text-success"><%= @monthly_counts[:redeemed] %></div>
           <div class="ft-stat-label">Redeemed</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="ft-stat-card">
-          <div class="ft-stat-val text-warning"><%= @orders.select { |o| o.token&.active? }.count %></div>
+          <div class="ft-stat-val text-warning"><%= @monthly_counts[:active] %></div>
           <div class="ft-stat-label">Active</div>
         </div>
       </div>
       <div class="col-6 col-md-3">
         <div class="ft-stat-card">
-          <div class="ft-stat-val text-danger"><%= @orders.select { |o| o.token&.expired? }.count %></div>
+          <div class="ft-stat-val text-danger"><%= @monthly_counts[:expired] %></div>
           <div class="ft-stat-label">Expired</div>
         </div>
       </div>

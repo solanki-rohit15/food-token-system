@@ -33,7 +33,7 @@ gem "font-awesome-sass", "~> 6.5"
 
 
 # Env vars
-gem 'dotenv-rails', groups: [:development, :test]
+gem "dotenv-rails", groups: [ :development, :test ]
 
 # Mailer OAuth SSL fix
 gem "faraday",          "~> 2.9"
@@ -64,5 +64,5 @@ gem "geocoder"
 
 group :development, :test do
   gem "rspec-rails"
-  gem "factory_bot_rails"  
+  gem "factory_bot_rails"
 end

@@ -8,6 +8,6 @@ class CreateRedemptionRequests < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :redemption_requests, [:token_id, :status]
+    add_index :redemption_requests, [ :token_id, :status ]
   end
 end

@@ -11,8 +11,8 @@ module Location
         user_lng = Float(lng)
         return :no_location unless valid_coordinates?(user_lat, user_lng)
 
-        office_coordinates = [setting.latitude.to_f, setting.longitude.to_f]
-        user_coordinates = [user_lat, user_lng]
+        office_coordinates = [ setting.latitude.to_f, setting.longitude.to_f ]
+        user_coordinates = [ user_lat, user_lng ]
 
         distance_meters = Geocoder::Calculations.distance_between(office_coordinates, user_coordinates) * 1000
         distance_meters <= setting.radius_meters.to_f ? :allowed : :denied

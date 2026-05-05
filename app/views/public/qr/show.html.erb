@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="theme-color" content="#9b2a2a">
+  <title>Food Token — <%= @data[:category] %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f4f4f6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 36px 28px 32px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.10);
+    }
+    .icon { font-size: 56px; margin-bottom: 12px; display: block; }
+    .title { font-size: 24px; font-weight: 800; color: #1a1a2e; margin-bottom: 4px; }
+    .meta  { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+    .status-box {
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .status-redeemed { background: #d1fae5; border: 1px solid #6ee7b7; color: #065f46; }
+    .status-pending  { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+    .footer { color: #9ca3af; font-size: 12px; line-height: 1.5; }
+    .badge {
+      display: inline-block;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #374151;
+      letter-spacing: 0.03em;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="icon"><%= @data[:icon] %></span>
+    <h1 class="title"><%= @data[:category] %></h1>
+    <p class="meta"><%= @data[:first_name] %>'s meal &bull; <%= @data[:date] %></p>
+
+    <% if @data[:redeemed] %>
+      <div class="status-box status-redeemed">
+        ✅ Redeemed<% if @data[:redeemed_at] %> at <%= @data[:redeemed_at] %><% end %>
+      </div>
+    <% else %>
+      <div class="status-box status-pending">
+        ⏳ Not yet redeemed
+      </div>
+    <% end %>
+
+    <p class="footer">
+      This is a read-only view.<br>
+      Vendor login required to process redemption.
+    </p>
+  </div>
+</body>
+</html>

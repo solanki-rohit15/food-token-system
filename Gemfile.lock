@@ -462,6 +462,7 @@ DEPENDENCIES
   bootstrap (~> 5.3)
   brakeman
   capybara
+  chunky_png
   debug
   devise
   dotenv-rails

@@ -25,7 +25,7 @@ Rails.application.configure do
   config.force_ssl = true
 
   # Logging
-  config.log_tags = [:request_id]
+  config.log_tags = [ :request_id ]
   config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
@@ -71,9 +71,9 @@ end
 
   # Active Record
   config.active_record.dump_schema_after_migration = false
-  config.active_record.attributes_for_inspect = [:id]
+  config.active_record.attributes_for_inspect = [ :id ]
 
-  # config/environments/production.rb
+# config/environments/production.rb
 # ADD this block — allows bypassing credentials entirely via env var
 if ENV["SECRET_KEY_BASE"].present?
   config.secret_key_base = ENV["SECRET_KEY_BASE"]

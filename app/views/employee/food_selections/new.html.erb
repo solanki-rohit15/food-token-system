@@ -8,6 +8,15 @@
     </p>
   </div>
 
+  <% if @ordered_categories.any? %>
+    <div class="px-3 mb-2">
+      <div class="alert alert-success d-flex align-items-center gap-2 mb-0">
+        <i class="bi bi-check-circle-fill text-success"></i>
+        <span class="small">You have already ordered: <strong><%= @ordered_categories.map { |c| FoodItem::CATEGORIES.dig(c, :label) || c }.join(", ") %></strong>. You can add more open meals below.</span>
+      </div>
+    </div>
+  <% end %>
+
   <div class="px-3 mb-3">
     <div class="alert alert-info d-flex align-items-center gap-2">
       <i class="bi bi-info-circle-fill text-primary"></i>
@@ -21,16 +30,16 @@
       <% next unless food_item %>
       <% setting   = @meal_settings[cat.to_s] %>
       <% available = food_item.available_now? %>
-     
+      <% already_ordered = @ordered_categories.include?(cat.to_s) %>
 
       <div class="ft-section px-3 mt-3">
-        <label class="ft-meal-select-item <%= available ? '' : 'disabled opacity-75' %>">
+        <label class="ft-meal-select-item <%= (available && !already_ordered) ? '' : 'disabled opacity-75' %>">
           <div class="ft-meal-select-check">
             <input type="checkbox"
                    name="categories[]"
                    value="<%= cat %>"
                    class="ft-meal-checkbox"
-                   <%= 'disabled' unless available %>>
+                   <%= 'disabled' if !available || already_ordered %>>
             <div class="ft-meal-check-ui"></div>
           </div>
 
@@ -38,7 +47,11 @@
 
           <div class="ft-meal-select-info flex-fill">
             <div class="ft-meal-select-name"><%= info[:label] %></div>
-            <% if available %>
+            <% if already_ordered %>
+              <span class="badge bg-secondary-subtle text-secondary small">
+                <i class="bi bi-check2 me-1"></i>Already Ordered
+              </span>
+            <% elsif available %>
               <span class="badge bg-success-subtle text-success small">Available</span>
             <% else %>
               <span class="badge bg-danger-subtle text-danger small">Closed</span>

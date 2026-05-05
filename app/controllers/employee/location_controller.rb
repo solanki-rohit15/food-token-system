@@ -8,7 +8,6 @@
 # submission endpoint, so blocking it creates a deadlock.
 class Employee::LocationController < ApplicationController
   skip_before_action :check_location_access, raise: false
-  before_action :authenticate_user!
 
   # POST /employee/location
   # Body: { latitude: Float, longitude: Float }

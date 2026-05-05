@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_22_194142) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_125910) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -62,15 +62,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_194142) do
     t.bigint "food_item_id", null: false
     t.string "item_code"
     t.bigint "order_id", null: false
-    t.text "qr_code"
-    t.boolean "redeemed"
     t.datetime "redeemed_at"
     t.integer "redeemed_by_id"
+    t.string "signed_qr_token"
     t.datetime "updated_at", null: false
     t.index ["food_item_id"], name: "index_order_items_on_food_item_id"
+    t.index ["item_code"], name: "index_order_items_on_item_code", unique: true
     t.index ["order_id", "food_item_id"], name: "index_order_items_on_order_id_and_food_item_id", unique: true
     t.index ["order_id"], name: "index_order_items_on_order_id"
     t.index ["redeemed_at"], name: "index_order_items_on_redeemed_at"
+    t.index ["redeemed_by_id"], name: "index_order_items_on_redeemed_by_id"
+    t.index ["signed_qr_token"], name: "index_order_items_on_signed_qr_token", unique: true
   end
 
   create_table "orders", force: :cascade do |t|
@@ -79,7 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_194142) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["date"], name: "index_orders_on_date"
-    t.index ["user_id", "date"], name: "index_orders_on_user_id_and_date", unique: true
+    t.index ["user_id", "date"], name: "index_orders_on_user_id_and_date"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -102,13 +104,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_22_194142) do
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
     t.bigint "order_id", null: false
+    t.string "public_token"
     t.datetime "redeemed_at"
     t.bigint "redeemed_by_id"
+    t.text "signed_payload"
     t.integer "status", default: 0, null: false
     t.string "token_number", null: false
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_tokens_on_expires_at"
     t.index ["order_id"], name: "index_tokens_on_order_id"
+    t.index ["public_token"], name: "index_tokens_on_public_token", unique: true
     t.index ["redeemed_by_id"], name: "index_tokens_on_redeemed_by_id"
     t.index ["status", "expires_at"], name: "index_tokens_on_status_and_expires_at"
     t.index ["status"], name: "index_tokens_on_status"
