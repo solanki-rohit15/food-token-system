@@ -60,7 +60,8 @@ if ENV["SMTP_HOST"].present?
     password:             ENV["SMTP_PASSWORD"],
     authentication:       :plain,
     enable_starttls_auto: true,
-    openssl_verify_mode:  OpenSSL::SSL::VERIFY_PEER
+    open_timeout:         5,
+    read_timeout:         5
   }
 else
   config.action_mailer.delivery_method = :test  # safe fallback
