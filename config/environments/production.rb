@@ -19,9 +19,8 @@ Rails.application.configure do
   config.silence_healthcheck_path = "/up"
   config.active_support.report_deprecations = false
 
-  config.cache_store    = :solid_cache_store
-  config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
+  config.cache_store = :memory_store
+  config.active_job.queue_adapter = :async
 
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_url_options   = {

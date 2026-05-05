@@ -28,10 +28,7 @@ gem "bootstrap",         "~> 5.3"
 gem "sassc-rails"
 gem "font-awesome-sass", "~> 6.5"
 
-# Background jobs — solid_queue handles Active Job, no sidekiq/redis needed
-gem "solid_queue"
-gem "solid_cache"
-gem "solid_cable"
+# Background jobs — using async adapter (no extra database tables needed)
 
 
 
