@@ -30,6 +30,9 @@ gem "font-awesome-sass", "~> 6.5"
 
 # Background jobs — using async adapter (no extra database tables needed)
 
+# Email delivery via HTTP API (SMTP ports blocked on Render free tier)
+gem "resend"
+
 
 
 # Env vars

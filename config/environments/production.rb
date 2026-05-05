@@ -27,17 +27,8 @@ Rails.application.configure do
     host:     ENV.fetch("APP_HOST", "example.com"),
     protocol: "https"
   }
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = {
-    address:              ENV.fetch("SMTP_HOST",     "smtp.gmail.com"),
-    port:                 ENV.fetch("SMTP_PORT",     587).to_i,
-    domain:               ENV.fetch("SMTP_DOMAIN",   "gmail.com"),
-    user_name:            ENV.fetch("SMTP_USER",     ""),
-    password:             ENV.fetch("SMTP_PASSWORD", ""),
-    authentication:       :plain,
-    enable_starttls_auto: true,
-    openssl_verify_mode:  OpenSSL::SSL::VERIFY_PEER
-  }
+  # Use Resend HTTP API (SMTP ports blocked on Render free tier)
+  config.action_mailer.delivery_method = :resend
 
   config.i18n.fallbacks = true
   config.active_record.dump_schema_after_migration = false
