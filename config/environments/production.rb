@@ -58,10 +58,9 @@ if ENV["SMTP_HOST"].present?
     user_name:            ENV["SMTP_USER"].to_s.strip,
     password:             ENV["SMTP_PASSWORD"].to_s.strip,
     authentication:       :plain,
-    enable_starttls_auto: true,
-    # Implicit SSL/TLS for port 465
-    ssl:                  ENV["SMTP_PORT"].to_s.strip == "465",
+    # Port 465 uses implicit SSL (tls), Port 587 uses STARTTLS
     tls:                  ENV["SMTP_PORT"].to_s.strip == "465",
+    enable_starttls_auto: ENV["SMTP_PORT"].to_s.strip != "465",
     open_timeout:         5,
     read_timeout:         5
   }
