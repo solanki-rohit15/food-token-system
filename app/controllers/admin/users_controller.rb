@@ -1,4 +1,5 @@
 class Admin::UsersController < ApplicationController
+  before_action :authenticate_user!
   before_action :require_admin!
   before_action :set_user, only: [ :show, :edit, :update, :destroy, :toggle_active, :resend_invitation ]
 
@@ -37,7 +38,7 @@ class Admin::UsersController < ApplicationController
                           .includes(order: :food_items)
                           .order(created_at: :desc)
                           .limit(10)
-
+                          
     respond_to do |format|
       format.html
       format.json do
@@ -49,10 +50,10 @@ class Admin::UsersController < ApplicationController
           employee_id: @user.employee_profile&.employee_id,
           tokens: @recent_tokens.map do |token|
             {
-              date:         token.order.date.strftime("%d %b %Y"),
-              items:        token.order.items_label,
+              date: token.order.date.strftime("%d %b %Y"),
+              items: token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", "),
               token_number: token.token_number,
-              status:       token.status
+              status: token.status
             }
           end
         }
@@ -64,45 +65,50 @@ class Admin::UsersController < ApplicationController
     @user = User.new(role: :employee)
   end
 
-  def create
-    temp_password = Devise.friendly_token[0, 12]
+def create
+  temp_password = Devise.friendly_token[0, 12]
 
-    @user = User.new(user_params.merge(
-      password:              temp_password,
-      password_confirmation: temp_password,
-      confirmed_at:          Time.current,
-      admin_created:         true,
-      must_change_password:  true
-    ))
+  @user = User.new(user_params.merge(
+    password:              temp_password,
+    password_confirmation: temp_password,
+    confirmed_at:          Time.current,
+    admin_created:         true,
+    must_change_password:  true
+  ))
 
-    if @user.save
-      UserMailer.invitation_email(@user, temp_password).deliver_now
+  if @user.save
+    # Enqueue mail — never let a delivery failure crash the HTTP request.
+    begin
+      UserMailer.invitation_email(@user, temp_password).deliver_later
+    rescue => e
+      Rails.logger.error("[UserMailer] Failed to enqueue invitation for #{@user.email}: #{e.message}")
+    end
 
-      respond_to do |format|
-        format.html { redirect_to admin_users_path, notice: "#{@user.name} created. Login credentials sent by email." }
-        format.json { render json: { success: true, message: "#{@user.name} created. Login credentials sent by email." } }
+    respond_to do |format|
+      format.html { redirect_to admin_users_path, notice: "#{@user.name} created. Login credentials sent by email." }
+      format.json { render json: { success: true, message: "#{@user.name} created. Login credentials sent by email." } }
+    end
+  else
+    respond_to do |format|
+      format.html do
+        flash.now[:alert] = @user.errors.full_messages.to_sentence
+        render :new, status: :unprocessable_entity
       end
-    else
-      respond_to do |format|
-        format.html do
-          flash.now[:alert] = @user.errors.full_messages.to_sentence
-          render :new, status: :unprocessable_entity
-        end
-        format.json { render json: { success: false, message: @user.errors.full_messages.to_sentence }, status: :unprocessable_entity }
-      end
+      format.json { render json: { success: false, message: @user.errors.full_messages.to_sentence }, status: :unprocessable_entity }
     end
   end
+end
 
   def edit; end
 
-  def update
-    if @user.update(update_user_params)
-      redirect_to admin_users_path, notice: "User updated successfully."
-    else
-      flash.now[:alert] = @user.errors.full_messages.to_sentence
-      render :edit, status: :unprocessable_entity
-    end
+def update
+  if @user.update(update_user_params)
+    redirect_to admin_users_path, notice: "User updated successfully."
+  else
+    flash.now[:alert] = @user.errors.full_messages.to_sentence
+    render :edit, status: :unprocessable_entity
   end
+end
 
   def destroy
     if @user == current_user
@@ -129,10 +135,14 @@ class Admin::UsersController < ApplicationController
   def resend_invitation
     temp_password = Devise.friendly_token[0, 12]
     @user.update!(password: temp_password, password_confirmation: temp_password, must_change_password: true)
-    UserMailer.invitation_email(@user, temp_password).deliver_now
-    message = "Invitation resent to #{@user.email}."
 
-    render json: { success: true, id: @user.id, message: message }
+    begin
+      UserMailer.invitation_email(@user, temp_password).deliver_later
+    rescue => e
+      Rails.logger.error("[UserMailer] Failed to enqueue resend for #{@user.email}: #{e.message}")
+    end
+
+    render json: { success: true, id: @user.id, message: "Invitation resent to #{@user.email}." }
   end
 
   private
