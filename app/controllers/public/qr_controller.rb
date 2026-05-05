@@ -1,4 +1,4 @@
-# Public::QrController
+# Public::QRController
 #
 # Every QR code now encodes a URL: https://host/qr/<signed_token>
 # When anyone scans the QR with a phone camera, they land here.
@@ -11,7 +11,7 @@
 #   - Only an HMAC-SHA256 signed token is in the URL — never a raw item_code or DB id
 #   - Token expires in 24 h (configurable via QR_TOKEN_TTL env var)
 #   - Tampering with the signed string raises InvalidSignature → 404
-class Public::QrController < ApplicationController
+class Public::QRController < ApplicationController
   skip_before_action :authenticate_user!
   skip_before_action :enforce_password_change!
   skip_before_action :check_location_access, raise: false
