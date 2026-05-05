@@ -53,16 +53,15 @@ Rails.application.configure do
 if ENV["SMTP_HOST"].present?
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-    address:              ENV["SMTP_HOST"].to_s.strip,
-    port:                 ENV.fetch("SMTP_PORT", "587").to_s.strip.to_i,
+    address:              'smtp.gmail.com',
+    port:                 587,
     user_name:            ENV["SMTP_USER"].to_s.strip,
     password:             ENV["SMTP_PASSWORD"].to_s.strip,
     authentication:       :plain,
-    # Port 465 uses implicit SSL (tls), Port 587 uses STARTTLS
-    tls:                  ENV["SMTP_PORT"].to_s.strip == "465",
-    enable_starttls_auto: ENV["SMTP_PORT"].to_s.strip != "465",
-    open_timeout:         5,
-    read_timeout:         5
+    enable_starttls_auto: true,
+    domain:               'gmail.com',
+    open_timeout:         15,
+    read_timeout:         15
   }
 else
   config.action_mailer.delivery_method = :test  # safe fallback
