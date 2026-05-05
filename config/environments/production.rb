@@ -55,7 +55,6 @@ if ENV["SMTP_HOST"].present?
   config.action_mailer.smtp_settings = {
     address:              ENV["SMTP_HOST"],
     port:                 ENV.fetch("SMTP_PORT", "587").to_i,
-    domain:               ENV.fetch("SMTP_DOMAIN", ENV.fetch("APP_HOST", "localhost")),
     user_name:            ENV["SMTP_USER"],
     password:             ENV["SMTP_PASSWORD"],
     authentication:       :plain,
