@@ -29,6 +29,9 @@ gem "sassc-rails"
 gem "font-awesome-sass", "~> 6.5"
 
 # Background jobs — solid_queue handles Active Job, no sidekiq/redis needed
+gem "solid_queue"
+gem "solid_cache"
+gem "solid_cable"
 
 
 
