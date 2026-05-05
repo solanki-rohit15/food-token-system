@@ -46,7 +46,6 @@ class Admin::UsersController < ApplicationController
           user: @user.as_json(only: [:id, :name, :email, :phone, :role]),
           initials: @user.initials,
           active: @user.active?,
-          department: @user.employee_profile&.department,
           employee_id: @user.employee_profile&.employee_id,
           tokens: @recent_tokens.map do |token|
             {

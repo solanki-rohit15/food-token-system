@@ -297,10 +297,10 @@ $(document).on('turbo:load DOMContentLoaded', function () {
           $phoneP.append(document.createTextNode(data.user.phone));
         }
         
-        if (data.department) {
+        if (data.employee_id) {
           var $deptP = $('<p>', { class: 'text-muted small mb-0' }).appendTo($cardBodyProfile);
-          $('<i>', { class: 'bi bi-building me-1' }).appendTo($deptP);
-          $deptP.append(document.createTextNode(data.department + ' • ID: '));
+          $('<i>', { class: 'bi bi-person-badge me-1' }).appendTo($deptP);
+          $deptP.append(document.createTextNode('ID: '));
           $('<span>', { class: 'font-monospace', text: data.employee_id }).appendTo($deptP);
         }
 

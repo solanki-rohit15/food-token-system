@@ -112,7 +112,7 @@ class Vendor::ScannerController < ApplicationController
         name:       token.user.name,
         email:      token.user.email,
         initials:   token.user.initials,
-        department: token.user.employee_profile&.department
+        employee_id: token.user.employee_profile&.employee_id
       },
       items: token.order.order_items.includes(:food_item).map { |oi| item_data(oi) }
     }

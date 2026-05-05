@@ -1,101 +1,54 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
-  # Code is not reloaded between requests
   config.enable_reloading = false
   config.eager_load = true
-
-  # Full error reports are disabled
   config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
-
-  # Serve static files
-  config.public_file_server.enabled = true
-  config.public_file_server.headers = {
-    "Cache-Control" => "public, max-age=#{1.year.to_i}"
-  }
-
-  # Assets
-  config.assets.compile = false
-
-  # Active Storage (TEMP: local — use S3 later)
+  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
   config.active_storage.service = :local
 
-  # Force SSL (Render supports HTTPS)
-  config.force_ssl = true
+  # Enforce SSL in production
+  config.assume_ssl  = true
+  config.force_ssl   = true
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
-  # Logging
   config.log_tags = [ :request_id ]
-  config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
+  config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
-
-  # Health check endpoint
   config.silence_healthcheck_path = "/up"
-
-  # Disable deprecation logs
   config.active_support.report_deprecations = false
 
-  # Cache (simple & safe)
-  config.cache_store = :memory_store
+  config.cache_store    = :solid_cache_store
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
 
-  # ── Background Jobs ─────────────────────────────────────────────
-  # SolidQueue runs inside Puma when SOLID_QUEUE_IN_PUMA=true (set this in Render env vars).
-  # Falls back to :async for single-dyno deployments without that flag.
-  # :async runs jobs in Puma's thread pool — no extra gem needed.
-  config.active_job.queue_adapter = :async
-
-  # ── Action Mailer ────────────────────────────────────────────────
-  # IMPORTANT: raise_delivery_errors = false so a mail timeout does NOT
-  # crash the HTTP request and return a 500 to the admin.
-  config.action_mailer.raise_delivery_errors = false
-  config.action_mailer.perform_caching = false
-  config.action_mailer.default_url_options = {
-    host:     ENV.fetch("APP_HOST", "localhost:3000"),
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.default_url_options   = {
+    host:     ENV.fetch("APP_HOST", "example.com"),
     protocol: "https"
   }
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address:              ENV.fetch("SMTP_HOST",     "smtp.gmail.com"),
+    port:                 ENV.fetch("SMTP_PORT",     587).to_i,
+    domain:               ENV.fetch("SMTP_DOMAIN",   "gmail.com"),
+    user_name:            ENV.fetch("SMTP_USER",     ""),
+    password:             ENV.fetch("SMTP_PASSWORD", ""),
+    authentication:       :plain,
+    enable_starttls_auto: true,
+    openssl_verify_mode:  OpenSSL::SSL::VERIFY_PEER
+  }
 
-  if ENV["SMTP_HOST"].present?
-    config.action_mailer.delivery_method = :smtp
-    config.action_mailer.smtp_settings = {
-      address:              ENV["SMTP_HOST"],
-      port:                 ENV.fetch("SMTP_PORT", "587").to_i,
-      domain:               ENV.fetch("SMTP_DOMAIN", ENV.fetch("APP_HOST", "localhost")),
-      user_name:            ENV["SMTP_USER"],
-      password:             ENV["SMTP_PASSWORD"],
-      authentication:       :plain,
-      enable_starttls_auto: true,
-      # Cloud hosting IPs (Render/Railway/Fly) are often blocked by Gmail cert checks.
-      # VERIFY_NONE allows the TLS handshake to succeed from these environments.
-      openssl_verify_mode:  OpenSSL::SSL::VERIFY_NONE,
-      open_timeout:         10,  # fail fast — never block the web request thread
-      read_timeout:         10
-    }
-  else
-    config.action_mailer.delivery_method = :test
-  end
-
-  # I18n fallbacks
   config.i18n.fallbacks = true
-
-  # Active Record
   config.active_record.dump_schema_after_migration = false
-  config.active_record.attributes_for_inspect = [ :id ]
+  config.active_record.attributes_for_inspect      = [ :id ]
 
-# config/environments/production.rb
-# ADD this block — allows bypassing credentials entirely via env var
-if ENV["SECRET_KEY_BASE"].present?
-  config.secret_key_base = ENV["SECRET_KEY_BASE"]
-end
-
-config.hosts.clear
-
-config.hosts << "localhost"
-config.hosts << "127.0.0.1"
-config.hosts << "0.0.0.0"
-
-# production domains
-config.hosts << ENV["APP_HOST"] if ENV["APP_HOST"].present?
-config.hosts << /.*\.onrender\.com/
-config.hosts << /.*\.fly\.dev/
-config.hosts << /.*\.railway\.app/
+  # Host whitelist — set APP_HOST in your environment
+  config.hosts = [
+    ENV.fetch("APP_HOST", nil),
+    /.*\.fly\.dev/,
+    /.*\.railway\.app/,
+    /.*\.render\.com/
+  ].compact
 end

@@ -2,9 +2,6 @@ class EmployeeProfile < ApplicationRecord
   belongs_to :user
 
   validates :employee_id, presence: true, uniqueness: true
-  validates :department,  presence: true
-
-  DEPARTMENTS = %w[Engineering Design Marketing HR Finance Operations Sales].freeze
 
   before_validation :generate_employee_id, on: :create
 

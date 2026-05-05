@@ -125,7 +125,7 @@
     $('#emp-initials').text(result.employee.initials);
     $('#emp-name').text(result.employee.name);
     $('#emp-email').text(result.employee.email);
-    $('#emp-dept').text(result.employee.department || '');
+    $('#emp-dept').text('');
     $('#token-id-disp').text(result.token_number);
     $('#token-expiry').text(result.expires_at);
 
