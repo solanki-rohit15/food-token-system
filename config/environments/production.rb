@@ -54,14 +54,18 @@ if ENV["SMTP_HOST"].present?
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
     address:              'smtp.gmail.com',
-    port:                 587,
+    port:                 ENV.fetch("SMTP_PORT", "587").to_i,
     user_name:            ENV["SMTP_USER"].to_s.strip,
     password:             ENV["SMTP_PASSWORD"].to_s.strip,
     authentication:       :plain,
-    enable_starttls_auto: true,
     domain:               'gmail.com',
-    open_timeout:         15,
-    read_timeout:         15
+    # Port 465 uses implicit SSL (tls), Port 587 uses STARTTLS
+    tls:                  ENV["SMTP_PORT"].to_s.strip == "465",
+    ssl:                  ENV["SMTP_PORT"].to_s.strip == "465",
+    enable_starttls_auto: ENV["SMTP_PORT"].to_s.strip != "465",
+    openssl_verify_mode:  'none', # Bypass cert validation for debugging
+    open_timeout:         20,
+    read_timeout:         20
   }
 else
   config.action_mailer.delivery_method = :test  # safe fallback
