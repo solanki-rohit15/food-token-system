@@ -76,7 +76,7 @@ class Admin::UsersController < ApplicationController
     ))
 
     if @user.save
-      UserMailer.invitation_email(@user, temp_password).deliver_later
+      UserMailer.invitation_email(@user, temp_password).deliver_now
 
       respond_to do |format|
         format.html { redirect_to admin_users_path, notice: "#{@user.name} created. Login credentials sent by email." }
@@ -129,7 +129,7 @@ class Admin::UsersController < ApplicationController
   def resend_invitation
     temp_password = Devise.friendly_token[0, 12]
     @user.update!(password: temp_password, password_confirmation: temp_password, must_change_password: true)
-    UserMailer.invitation_email(@user, temp_password).deliver_later
+    UserMailer.invitation_email(@user, temp_password).deliver_now
     message = "Invitation resent to #{@user.email}."
 
     render json: { success: true, id: @user.id, message: message }
