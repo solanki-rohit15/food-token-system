@@ -29,8 +29,8 @@ Rails.application.configure do
   config.cache_store = :memory_store
   config.active_job.queue_adapter = :async
 
-  # 🔥 IMPORTANT: mail failure se app crash na ho
-  config.action_mailer.raise_delivery_errors = false
+  # Failures in background jobs will be logged, but won't crash the web request
+  config.action_mailer.raise_delivery_errors = true
 
   config.action_mailer.default_url_options = {
     host: ENV.fetch("APP_HOST", "example.com"),
