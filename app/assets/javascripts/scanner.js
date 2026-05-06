@@ -111,6 +111,19 @@
     if (result.valid) {
       tokenId = result.token_id;
       showValidResult(result);
+    } else if (result.fully_redeemed) {
+      // Show a friendly "completed" message instead of red "Invalid"
+      $('#result-invalid').removeClass('d-none');
+      $('#result-valid').addClass('d-none');
+      var $header = $('#result-invalid .ft-result-header');
+      $header.removeClass('ft-result-invalid').addClass('ft-result-valid');
+      $header.find('.ft-result-status-icon').text('✅');
+      $header.find('h3').text('Fully Redeemed');
+      var msg = 'All items already redeemed';
+      if (result.redeemed_at) msg += ' at ' + result.redeemed_at;
+      if (result.employee_name) msg += ' — ' + result.employee_name;
+      msg += '.';
+      $('#invalid-message').text(msg);
     } else {
       showInvalidResult(result);
     }

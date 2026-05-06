@@ -28,8 +28,15 @@ class Vendor::ScannerController < ApplicationController
 
     return render_error("Token not found.")          unless token
     return render_error("Token has expired.")        if token.expired?
-    return render_error("Token fully redeemed.",
-                        extra: { redeemed_at: token.redeemed_at&.strftime("%I:%M %p") }) if token.fully_redeemed?
+    if token.fully_redeemed?
+      return render json: {
+        valid: false,
+        fully_redeemed: true,
+        message: "All items already redeemed.",
+        redeemed_at: token.redeemed_at&.strftime("%I:%M %p"),
+        employee_name: token.user.name
+      }
+    end
 
     broadcast_scan_to_employee(token)
 

@@ -216,6 +216,14 @@ $(document).on('turbo:load DOMContentLoaded', function () {
             var userId = $form.data('user-id');
             $('#user_row_' + userId).fadeOut(400, function() { $(this).remove(); });
           }
+
+          // Redemption approve — remove pending card, reload after 1s
+          if ($form.hasClass('js-redemption-approve-form') || $form.hasClass('js-redemption-reject-form')) {
+            if (data.request_id) {
+              $('#pending_req_' + data.request_id).fadeOut(400, function() { $(this).remove(); });
+            }
+            setTimeout(function() { location.reload(); }, 1000);
+          }
           
           if ($form.hasClass('js-reload-on-success')) {
             setTimeout(function() { location.reload(); }, 1000);
