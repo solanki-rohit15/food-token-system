@@ -1,5 +1,5 @@
 class UserMailer < ApplicationMailer
-  default from: ENV.fetch("MAILER_FROM", ENV["SMTP_USER"] || "noreply@foodtoken.company.com")
+  default from: ENV.fetch("MAILER_SENDER", "noreply@foodtoken.com")
 
   def invitation_email(user, temp_password)
     @user          = user
