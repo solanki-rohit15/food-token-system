@@ -8,7 +8,7 @@
     <div class="d-flex gap-2 align-items-center">
       <%= form_tag monthly_admin_reports_path, method: :get, class: "d-flex gap-2 js-pjax-form" do %>
         <input type="month" name="month_start" value="<%= @month_start.strftime('%Y-%m') %>"
-               class="form-control form-control-sm ft-input" style="width:160px" onchange="$(this.form).trigger('submit')">
+               class="form-control form-control-sm ft-input ft-w-160 js-auto-submit">
       <% end %>
       <%= link_to export_monthly_admin_reports_path(month_start: @month_start.strftime("%Y-%m")), class: "btn btn-sm btn-outline-success" do %>
         <i class="bi bi-download me-1"></i>CSV

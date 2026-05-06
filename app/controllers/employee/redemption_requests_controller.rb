@@ -57,7 +57,7 @@ class Employee::RedemptionRequestsController < ApplicationController
       employee:  current_user.name
     }.merge(extra))
 
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error(
       "[Redemption##{event}] Broadcast failed " \
       "request_id=#{@request&.id} " \

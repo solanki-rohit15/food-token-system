@@ -9,7 +9,7 @@
   <div class="px-3 mb-3">
     <%= form_tag admin_reports_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center js-pjax-form" do %>
       <input type="date" name="date" value="<%= @date %>" max="<%= Date.current %>"
-             class="form-control form-control-sm ft-input" style="width:160px">
+             class="form-control form-control-sm ft-input ft-w-160">
       <button type="submit" class="btn btn-sm ft-btn-primary btn-fixed-sm">
         <i class="bi bi-filter me-1"></i>Filter
       </button>

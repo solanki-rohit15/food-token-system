@@ -14,14 +14,13 @@
   <div class="px-3 mb-3">
     <%= form_tag admin_users_path, method: :get, class: "d-flex flex-wrap gap-2 align-items-center js-users-search-form" do %>
       <input type="text" name="search" id="users-search-input" value="<%= params[:search] %>"
-             class="form-control form-control-sm ft-input" placeholder="Search name or email…"
-             style="width:200px">
-      <select name="role" class="form-select form-select-sm ft-input" style="width:130px">
+             class="form-control form-control-sm ft-input ft-w-200" placeholder="Search name or email…">
+      <select name="role" class="form-select form-select-sm ft-input ft-w-130">
         <option value="">All Roles</option>
         <option value="employee" <%= "selected" if params[:role]=="employee" %>>Employee</option>
         <option value="vendor"   <%= "selected" if params[:role]=="vendor"   %>>Vendor</option>
       </select>
-      <select name="active" class="form-select form-select-sm ft-input" style="width:120px">
+      <select name="active" class="form-select form-select-sm ft-input ft-w-120">
         <option value="">All Status</option>
         <option value="true"  <%= "selected" if params[:active]=="true"  %>>Active</option>
         <option value="false" <%= "selected" if params[:active]=="false" %>>Inactive</option>

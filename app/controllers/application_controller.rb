@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   before_action :expire_stale_tokens!, if: -> { user_signed_in? && current_user.employee? }
 
   rescue_from ActionController::InvalidAuthenticityToken, with: :handle_invalid_authenticity_token
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
 
   protected
 
@@ -134,5 +135,12 @@ class ApplicationController < ActionController::Base
     Token.expire_stale!
   rescue StandardError => e
     Rails.logger.error("[expire_stale_tokens!] #{e.class}: #{e.message}")
+  end
+
+  def record_not_found
+    respond_to do |format|
+      format.html { render file: "#{Rails.root}/public/404.html", layout: false, status: :not_found }
+      format.json { render json: { error: "Record not found" }, status: :not_found }
+    end
   end
 end

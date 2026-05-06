@@ -64,50 +64,45 @@ class Admin::UsersController < ApplicationController
     @user = User.new(role: :employee)
   end
 
-def create
-  temp_password = Devise.friendly_token[0, 12]
+  def create
+    temp_password = Devise.friendly_token[0, 12]
 
-  @user = User.new(user_params.merge(
-    password:              temp_password,
-    password_confirmation: temp_password,
-    confirmed_at:          Time.current,
-    admin_created:         true,
-    must_change_password:  true
-  ))
+    @user = User.new(user_params.merge(
+      password:              temp_password,
+      password_confirmation: temp_password,
+      confirmed_at:          Time.current,
+      admin_created:         true,
+      must_change_password:  true
+    ))
 
-  if @user.save
-    # Enqueue mail — never let a delivery failure crash the HTTP request.
-    begin
-      UserMailer.invitation_email(@user, temp_password).deliver_later
-    rescue => e
-      Rails.logger.error("[UserMailer] Failed to enqueue invitation for #{@user.email}: #{e.message}")
-    end
+    if @user.save
+      send_invitation_email(@user, temp_password)
 
-    respond_to do |format|
-      format.html { redirect_to admin_users_path, notice: "#{@user.name} created. Login credentials sent by email." }
-      format.json { render json: { success: true, message: "#{@user.name} created. Login credentials sent by email." } }
-    end
-  else
-    respond_to do |format|
-      format.html do
-        flash.now[:alert] = @user.errors.full_messages.to_sentence
-        render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { redirect_to admin_users_path, notice: "#{@user.name} created. Login credentials sent by email." }
+        format.json { render json: { success: true, message: "#{@user.name} created. Login credentials sent by email." } }
       end
-      format.json { render json: { success: false, message: @user.errors.full_messages.to_sentence }, status: :unprocessable_entity }
+    else
+      respond_to do |format|
+        format.html do
+          flash.now[:alert] = @user.errors.full_messages.to_sentence
+          render :new, status: :unprocessable_entity
+        end
+        format.json { render json: { success: false, message: @user.errors.full_messages.to_sentence }, status: :unprocessable_entity }
+      end
     end
   end
-end
 
   def edit; end
 
-def update
-  if @user.update(update_user_params)
-    redirect_to admin_users_path, notice: "User updated successfully."
-  else
-    flash.now[:alert] = @user.errors.full_messages.to_sentence
-    render :edit, status: :unprocessable_entity
+  def update
+    if @user.update(update_user_params)
+      redirect_to admin_users_path, notice: "User updated successfully."
+    else
+      flash.now[:alert] = @user.errors.full_messages.to_sentence
+      render :edit, status: :unprocessable_entity
+    end
   end
-end
 
   def destroy
     if @user == current_user
@@ -135,16 +130,18 @@ end
     temp_password = Devise.friendly_token[0, 12]
     @user.update!(password: temp_password, password_confirmation: temp_password, must_change_password: true)
 
-    begin
-      UserMailer.invitation_email(@user, temp_password).deliver_later
-    rescue => e
-      Rails.logger.error("[UserMailer] Failed to enqueue resend for #{@user.email}: #{e.message}")
-    end
+    send_invitation_email(@user, temp_password)
 
     render json: { success: true, id: @user.id, message: "Invitation resent to #{@user.email}." }
   end
 
   private
+
+  def send_invitation_email(user, temp_password)
+    UserMailer.invitation_email(user, temp_password).deliver_later
+  rescue StandardError => e
+    Rails.logger.error("[UserMailer] Failed to enqueue invitation for #{user.email}: #{e.message}")
+  end
 
   def set_user
     @user = User.find(params[:id])

@@ -1,29 +1,27 @@
-<div class="min-h-screen bg-red-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-    <div class="text-center">
-      <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-        <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 4v2M4.93 4.93a10 10 0 1114.14 14.14M4.93 4.93L9.17 9.17m0 0a7 7 0 0010 10L9.17 9.17m0 0L4.93 4.93"></path>
-        </svg>
+<div class="d-flex align-items-center justify-content-center min-vh-100 bg-light p-3">
+  <div class="card shadow border-0 rounded-4" style="max-width: 400px; width: 100%;">
+    <div class="card-body p-4 text-center">
+      <div class="mx-auto d-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger mb-4" style="width: 60px; height: 60px;">
+        <i class="bi bi-geo-alt-fill fs-2"></i>
       </div>
-      <h3 class="mt-4 text-lg font-medium text-gray-900">Location Access Required</h3>
-      <p class="mt-2 text-sm text-gray-600">
+      <h3 class="h5 fw-bold text-dark">Location Access Required</h3>
+      <p class="text-secondary small mt-2">
         <%= message %>
       </p>
-      
-      <div class="mt-6 space-y-3">
-        <button onclick="location.reload()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
-          Try Again
-        </button>
-        
-        <button onclick="location.href='<%= new_user_session_path %>'" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-          Sign Out
-        </button>
+
+      <div class="d-grid gap-2 mt-4">
+        <a href="javascript:location.reload()" class="btn btn-primary fw-semibold">
+          <i class="bi bi-arrow-clockwise me-1"></i> Try Again
+        </a>
+
+        <%= link_to destroy_user_session_path, method: :delete, class: "btn btn-outline-secondary fw-semibold" do %>
+          <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+        <% end %>
       </div>
 
-      <div class="mt-4 text-xs text-gray-500">
-        <p>If you're having location issues:</p>
-        <ul class="mt-2 text-left list-disc list-inside">
+      <div class="mt-4 text-start bg-light rounded p-3 small text-muted border">
+        <p class="fw-semibold mb-2 text-dark">If you're having location issues:</p>
+        <ul class="mb-0 ps-3">
           <li>Enable GPS on your device</li>
           <li>Check browser permission for location</li>
           <li>Ensure you're within office premises</li>

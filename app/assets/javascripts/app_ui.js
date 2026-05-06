@@ -151,6 +151,11 @@ $(document).on('turbo:load DOMContentLoaded', function () {
     });
   });
 
+  // Auto-submit forms on change
+  $(document).on('change', '.js-auto-submit', function () {
+    $(this.form).trigger('submit');
+  });
+
   // ── Generic AJAX Form Handler ──────────────────────────────────────
   $(document).on('submit', '.js-fetch-form', function (e) {
     e.preventDefault();

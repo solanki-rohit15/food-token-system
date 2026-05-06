@@ -1419,3 +1419,15 @@ $btn-fixed-sizes: (
     max-width: 100%;
   }
 }
+
+/* Audit Fixes: Inline styles replacement */
+.ft-w-120 { width: 120px !important; }
+.ft-w-130 { width: 130px !important; }
+.ft-w-140 { width: 140px !important; }
+.ft-w-150 { width: 150px !important; }
+.ft-w-160 { width: 160px !important; }
+.ft-w-200 { width: 200px !important; }
+
+.ft-fs-8 { font-size: 8px !important; }
+.ft-fs-11 { font-size: 11px !important; }
+.ft-fs-48 { font-size: 48px !important; }

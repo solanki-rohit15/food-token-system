@@ -40,8 +40,7 @@
                       <input type="time"
                              name="meal_settings[<%= setting.meal_type %>][start_time]"
                              value="<%= setting.start_time&.strftime('%H:%M') %>"
-                             class="form-control form-control-sm"
-                             style="width:130px">
+                             class="form-control form-control-sm ft-input ft-w-130">
                     </td>
 
                     <!-- ✅ END TIME -->
@@ -49,13 +48,12 @@
                       <input type="time"
                              name="meal_settings[<%= setting.meal_type %>][end_time]"
                              value="<%= setting.end_time&.strftime('%H:%M') %>"
-                             class="form-control form-control-sm"
-                             style="width:130px">
+                             class="form-control form-control-sm ft-input ft-w-130">
                     </td>
 
                     <!-- ✅ PRICE -->
                     <td>
-                      <div class="input-group" style="width:130px">
+                      <div class="input-group ft-w-130">
                         <span class="input-group-text">₹</span>
                         <input type="number"
                                name="meal_settings[<%= setting.meal_type %>][price]"

@@ -36,7 +36,7 @@
           <input type="date" id="date-picker"
                  value="<%= @date&.strftime('%Y-%m-%d') || Date.current %>"
                  max="<%= Date.current %>"
-                 class="form-control form-control-sm ft-input" style="width:160px">
+                 class="form-control form-control-sm ft-input ft-w-160">
           <button id="btn-today" class="btn btn-sm btn-outline-secondary ft-dashboard-btn">
             Today
           </button>
@@ -47,7 +47,7 @@
           <input type="month" id="month-picker"
                  value="<%= @month&.strftime('%Y-%m') || Date.current.strftime('%Y-%m') %>"
                  max="<%= Date.current.strftime('%Y-%m') %>"
-                 class="form-control form-control-sm ft-input" style="width:160px">
+                 class="form-control form-control-sm ft-input ft-w-160">
         </div>
 
         <%# Loading spinner — shown during AJAX fetch %>
@@ -163,7 +163,7 @@
 
     <%# Empty state %>
     <div id="empty-state" class="px-3 mt-4 text-center <%= @today_tokens&.none? ? '' : 'd-none' %>">
-      <div style="font-size:48px">🍽️</div>
+      <div class="ft-fs-48">🍽️</div>
       <p class="text-muted">No tokens for <%= @date == Date.current ? "today" : @date&.strftime("%b %d") %> yet.</p>
     </div>
 

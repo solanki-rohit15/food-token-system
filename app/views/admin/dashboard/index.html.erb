@@ -121,15 +121,15 @@
     </div>
     <div class="ft-vendor-card">
       <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-        <span><i class="bi bi-circle-fill text-success me-2" style="font-size:8px;"></i>Active</span>
+        <span><i class="bi bi-circle-fill text-success me-2 ft-fs-8"></i>Active</span>
         <span class="badge bg-success-subtle text-success border border-success-subtle"><%= @stats[:today_active] %></span>
       </div>
       <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-        <span><i class="bi bi-circle-fill text-secondary me-2" style="font-size:8px;"></i>Redeemed</span>
+        <span><i class="bi bi-circle-fill text-secondary me-2 ft-fs-8"></i>Redeemed</span>
         <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><%= @stats[:today_redeemed] %></span>
       </div>
       <div class="d-flex justify-content-between align-items-center py-2">
-        <span><i class="bi bi-circle-fill text-danger me-2" style="font-size:8px;"></i>Expired</span>
+        <span><i class="bi bi-circle-fill text-danger me-2 ft-fs-8"></i>Expired</span>
         <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><%= @stats[:today_expired] %></span>
       </div>
     </div>
@@ -146,7 +146,7 @@
           </div>
           <div class="flex-fill ms-2">
             <div class="fw-semibold small"><%= token.user.name %></div>
-            <div class="text-muted" style="font-size:11px;"><%= token.summary %></div>
+            <div class="text-muted ft-fs-11"><%= token.summary %></div>
           </div>
           <% if token.active? %>
             <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>

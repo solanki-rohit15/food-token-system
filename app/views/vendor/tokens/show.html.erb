@@ -1,5 +1,5 @@
 <% content_for :title, "Token #{@token.token_number} — FoodToken" %>
-<% content_for :body_data, "data-token-status-url=\"#{status_vendor_token_path(@token)}\"".html_safe %>
+<% content_for :body_data do %>data-token-status-url="<%= status_vendor_token_path(@token) %>"<% end %>
 
 <div class="ft-page pb-5">
   <div class="px-3 py-3 d-flex align-items-center gap-2">
