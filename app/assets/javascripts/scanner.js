@@ -286,12 +286,20 @@
       if (!tokenId) return;
       $.getJSON('/vendor/tokens/' + tokenId + '/status', function(data) {
         var state = JSON.stringify({
-          items:   (data.order_items || []).map(function (i) { return i.redeemed; }),
-          status:  data.token_status
+          items:    (data.order_items || []).map(function (i) { return i.redeemed; }),
+          status:   data.token_status,
+          pending:  (data.pending_requests || []).length
         });
         if (knownState !== null && knownState !== state) {
-          // State changed! Re-verify to re-render the whole result block
+          var oldState   = JSON.parse(knownState);
+          var newState   = JSON.parse(state);
+          var wasRejected = newState.pending < oldState.pending &&
+                            newState.items.join() === oldState.items.join();
+          // Re-verify to re-render the whole result block
           verifyCode('{"id":' + tokenId + '}');
+          if (wasRejected) {
+            FT.showFlash('error', 'Your redemption request was rejected by the employee.');
+          }
         }
         knownState = state;
       });
