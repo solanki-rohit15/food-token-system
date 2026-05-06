@@ -112,18 +112,33 @@
       tokenId = result.token_id;
       showValidResult(result);
     } else if (result.fully_redeemed) {
-      // Show a friendly "completed" message instead of red "Invalid"
+      // Show a friendly green "completed" screen with item names
       $('#result-invalid').removeClass('d-none');
       $('#result-valid').addClass('d-none');
       var $header = $('#result-invalid .ft-result-header');
       $header.removeClass('ft-result-invalid').addClass('ft-result-valid');
       $header.find('.ft-result-status-icon').text('✅');
       $header.find('h3').text('Fully Redeemed');
-      var msg = 'All items already redeemed';
-      if (result.redeemed_at) msg += ' at ' + result.redeemed_at;
-      if (result.employee_name) msg += ' — ' + result.employee_name;
-      msg += '.';
-      $('#invalid-message').text(msg);
+
+      var $msgBox = $('#invalid-message').empty();
+
+      // Employee name + time
+      var summary = '';
+      if (result.employee_name) summary += result.employee_name;
+      if (result.redeemed_at)   summary += ' · ' + result.redeemed_at;
+      if (summary) {
+        $('<p>', { class: 'text-muted small mb-2', text: summary }).appendTo($msgBox);
+      }
+
+      // Item pills
+      if (result.items && result.items.length) {
+        var $pills = $('<div>', { class: 'd-flex flex-wrap gap-2 mt-1' }).appendTo($msgBox);
+        result.items.forEach(function (item) {
+          var label = item.icon + ' ' + item.label;
+          if (item.redeemed_at) label += ' · ' + item.redeemed_at;
+          $('<span>', { class: 'badge bg-success fs-6 px-3 py-2', text: label }).appendTo($pills);
+        });
+      }
     } else {
       showInvalidResult(result);
     }

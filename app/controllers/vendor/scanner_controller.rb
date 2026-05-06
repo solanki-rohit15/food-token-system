@@ -30,11 +30,13 @@ class Vendor::ScannerController < ApplicationController
     return render_error("Token has expired.")        if token.expired?
     if token.fully_redeemed?
       return render json: {
-        valid: false,
+        valid:         false,
         fully_redeemed: true,
-        message: "All items already redeemed.",
-        redeemed_at: token.redeemed_at&.strftime("%I:%M %p"),
-        employee_name: token.user.name
+        redeemed_at:   token.redeemed_at&.strftime("%I:%M %p"),
+        employee_name: token.user.name,
+        items:         token.order.order_items.includes(:food_item).map { |oi|
+          { label: oi.food_item.category_label, icon: oi.food_item.icon, redeemed_at: oi.redeemed_at&.strftime("%I:%M %p") }
+        }
       }
     end
 
