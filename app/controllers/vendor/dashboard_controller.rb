@@ -25,7 +25,7 @@ class Vendor::DashboardController < ApplicationController
   # ── Daily ─────────────────────────────────────────────────────────
   def build_daily_view
     @date            = safe_parse_date(params[:date]) || Date.current
-    @today_tokens    = Token.for_date(@date).includes(order: [ :user, :food_items ])
+    @today_tokens    = Token.for_date(@date).includes(order_item: [ :food_item, order: :user ])
     @redeemed_tokens = @today_tokens.redeemed
     @meal_summary    = category_redemption_summary(@date..@date, redeemed_only: true)
     @recent_scans    = @redeemed_tokens.order(redeemed_at: :desc).limit(8)
@@ -93,7 +93,7 @@ class Vendor::DashboardController < ApplicationController
     {
       employee_name:     token.user.name,
       employee_initials: token.user.initials,
-      categories:        token.order.items_label,
+      categories:        token.summary,
       token_number:      token.token_number,
       redeemed_at:       token.redeemed_at&.strftime("%I:%M %p")
     }
@@ -104,7 +104,7 @@ class Vendor::DashboardController < ApplicationController
   # One SQL query — counts per category for a date range
   def category_redemption_summary(date_range, redeemed_only: true)
     counts = OrderItem
-      .joins(food_item: {}, order: :token)
+      .joins(:food_item, :token, :order)
       .where(orders: { date: date_range })
       .then { |q| redeemed_only ? q.where(tokens: { status: Token.statuses[:redeemed] }) : q }
       .group("food_items.category")
@@ -132,11 +132,10 @@ class Vendor::DashboardController < ApplicationController
 
     # Single query for all days × categories
     all_counts = OrderItem
-      .joins(food_item: {}, order: :token)
+      .joins(:food_item, :token, :order)
       .where(orders: { date: range }, tokens: { status: Token.statuses[:redeemed] })
       .group("orders.date", "food_items.category")
       .count
-    # all_counts = { [Date, "lunch"] => 5, [Date, "breakfast"] => 3, ... }
 
     prices = MealSetting.all.index_by(&:meal_type)
 

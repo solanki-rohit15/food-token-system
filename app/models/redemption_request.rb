@@ -14,9 +14,7 @@ class RedemptionRequest < ApplicationRecord
   delegate :user, to: :token, prefix: :employee
 
   # ──────────────────────────────────────────────────────────────────
-  # CRITICAL FIX: approve! now redeems ONLY the specific order_item,
-  # NOT the whole token. The token itself only flips to :redeemed when
-  # every single order_item under that order has been redeemed.
+  # approve! now redeems the specific order_item and its token.
   # ──────────────────────────────────────────────────────────────────
   def approve!
     with_lock do
@@ -24,15 +22,11 @@ class RedemptionRequest < ApplicationRecord
       return false if rejected?
 
       ActiveRecord::Base.transaction do
-        # 1. Redeem the specific order_item
+        # 1. Redeem the specific order_item (this will also redeem the token)
         order_item.redeem!(vendor)
 
         # 2. Mark this request as approved
-        update!(status: :approved, responded_at: (responded_at || Time.current))
-
-        # 3. If ALL order_items under this token's order are now redeemed,
-        #    flip the token status to :redeemed as well.
-        check_and_finalize_token!
+        update!(status: :approved, responded_at: Time.current)
       end
     end
 
@@ -47,25 +41,14 @@ class RedemptionRequest < ApplicationRecord
       return true if rejected?
       return false if approved?
 
-      update!(status: :rejected, responded_at: (responded_at || Time.current))
+      update!(status: :rejected, responded_at: Time.current)
       true
     end
   end
 
   private
 
-  # Flip the parent token to :redeemed only when every item is done.
-  def check_and_finalize_token!
-    if token.order.order_items.where(redeemed_at: nil).none?
-      token.update!(
-        status:      :redeemed,
-        redeemed_at: Time.current,
-        redeemed_by_id: vendor.id
-      )
-    end
-  end
-
-  # Only one pending request per order_item (not per token)
+  # Only one pending request per order_item
   def one_pending_per_order_item
     return unless order_item_id.present?
     if RedemptionRequest.where(order_item_id: order_item_id, status: :pending).exists?
@@ -73,11 +56,11 @@ class RedemptionRequest < ApplicationRecord
     end
   end
 
-  # Ensure the order_item actually belongs to the token's order
+  # Ensure the order_item actually belongs to the token
   def order_item_belongs_to_token
     return unless order_item && token
-    unless order_item.order_id == token.order_id
-      errors.add(:order_item, "does not belong to this token's order")
+    unless token.order_item_id == order_item_id
+      errors.add(:order_item, "does not belong to this token")
     end
   end
 end

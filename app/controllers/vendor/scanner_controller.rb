@@ -24,25 +24,24 @@ class Vendor::ScannerController < ApplicationController
     return render_error("No QR data provided.") if qr_data.blank?
 
     order_item = resolve_order_item(qr_data)
-    token      = order_item&.order&.token || resolve_token(qr_data)
+    token      = order_item&.token || resolve_token(qr_data)
 
     return render_error("Token not found.")          unless token
     return render_error("Token has expired.")        if token.expired?
-    if token.fully_redeemed?
+    
+    if token.redeemed?
       return render json: {
         valid:         false,
         fully_redeemed: true,
         redeemed_at:   token.redeemed_at&.strftime("%I:%M %p"),
         employee_name: token.user.name,
-        items:         token.order.order_items.includes(:food_item).map { |oi|
-          { label: oi.food_item.category_label, icon: oi.food_item.icon, redeemed_at: oi.redeemed_at&.strftime("%I:%M %p") }
-        }
+        items:         [item_data(token.order_item)]
       }
     end
 
     broadcast_scan_to_employee(token)
 
-    render json: build_verify_payload(token, order_item)
+    render json: build_verify_payload(token, token.order_item)
   end
 
   private
@@ -50,11 +49,11 @@ class Vendor::ScannerController < ApplicationController
   # ── Resolution ────────────────────────────────────────────────────
 
   def resolve_prefilled
-    item = OrderItem.includes(:food_item, order: [ :user, :token, :food_items ])
+    item = OrderItem.includes(:food_item, :token, order: :user)
                     .find_by(item_code: params[:item_code])
     return nil unless item
 
-    token = item.order.token
+    token = item.token
     return nil unless token
 
     build_verify_payload(token, item)
@@ -89,7 +88,7 @@ class Vendor::ScannerController < ApplicationController
 
   def find_item_by_code(item_code)
     return nil if item_code.blank?
-    OrderItem.includes(:food_item, order: [ :token, :food_items, :user ])
+    OrderItem.includes(:food_item, :token, order: :user)
              .find_by(item_code: item_code.to_s.strip)
   end
 
@@ -123,7 +122,7 @@ class Vendor::ScannerController < ApplicationController
         initials:   token.user.initials,
         employee_id: token.user.employee_profile&.employee_id
       },
-      items: token.order.order_items.includes(:food_item).map { |oi| item_data(oi) }
+      items: [item_data(token.order_item)]
     }
   end
 

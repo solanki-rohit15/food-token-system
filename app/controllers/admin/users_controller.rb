@@ -1,5 +1,4 @@
 class Admin::UsersController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin!
   before_action :set_user, only: [ :show, :edit, :update, :destroy, :toggle_active, :resend_invitation ]
 
@@ -35,7 +34,7 @@ class Admin::UsersController < ApplicationController
 
   def show
     @recent_tokens = Token.for_user(@user)
-                          .includes(order: :food_items)
+                          .includes(order_item: [ :food_item, order: :user ])
                           .order(created_at: :desc)
                           .limit(10)
                           
@@ -50,7 +49,7 @@ class Admin::UsersController < ApplicationController
           tokens: @recent_tokens.map do |token|
             {
               date: token.order.date.strftime("%d %b %Y"),
-              items: token.food_items.map { |fi| "#{fi.icon} #{fi.category_label}" }.join(", "),
+              items: token.summary,
               token_number: token.token_number,
               status: token.status
             }

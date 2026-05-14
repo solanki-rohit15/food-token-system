@@ -20,28 +20,27 @@
     <div class="table-responsive">
       <table class="table ft-table align-middle">
         <thead class="table-light">
-          <tr><th>Employee</th><th>Email</th><th>Items</th><th>Token</th><th>Status</th><th>Time</th></tr>
+          <tr><th>Employee</th><th>Email</th><th>Meal</th><th>Token</th><th>Status</th><th>Time</th></tr>
         </thead>
         <tbody>
-          <% @orders.each do |order| %>
+          <% @tokens.each do |token| %>
+            <% user = token.user %>
             <tr>
               <td>
                 <div class="d-flex align-items-center gap-2">
-                  <div class="ft-avatar-sm"><%= order.user.initials %></div>
-                  <div>
-                    <div class="fw-semibold small"><%= order.user.name %></div>
-                  </div>
+                  <div class="ft-avatar-sm"><%= user.initials %></div>
+                  <div class="fw-semibold small"><%= user.name %></div>
                 </div>
               </td>
-              <td class="small text-muted"><%= order.user.email %></td>
-              <td class="small"><%= order.items_label %></td>
-              <td><span class="badge bg-light border text-dark font-monospace">#<%= order.token&.id.to_s.rjust(6,"0") %></span></td>
-              <td><%= token_status_badge(order.token) %></td>
-              <td class="small text-muted"><%= order.created_at.strftime("%I:%M %p") %></td>
+              <td class="small text-muted"><%= user.email %></td>
+              <td class="small"><%= token.summary %></td>
+              <td><span class="badge bg-light border text-dark font-monospace">#<%= token.token_number %></span></td>
+              <td><%= token_status_badge(token) %></td>
+              <td class="small text-muted"><%= token.created_at.strftime("%I:%M %p") %></td>
             </tr>
           <% end %>
-          <% if @orders.empty? %>
-            <tr><td colspan="6" class="text-center text-muted py-4">No orders on this date.</td></tr>
+          <% if @tokens.empty? %>
+            <tr><td colspan="6" class="text-center text-muted py-4">No tokens on this date.</td></tr>
           <% end %>
         </tbody>
       </table>

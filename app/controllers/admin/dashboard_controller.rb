@@ -26,14 +26,14 @@ class Admin::DashboardController < ApplicationController
 
   def fetch_recent_tokens
     Token.today
-         .includes(order: [ :user, :food_items ])
+         .includes(order_item: [ :food_item, order: :user ])
          .order(created_at: :desc)
          .limit(10)
   end
 
   def build_meal_breakdown
     meal_counts = OrderItem
-      .joins(:food_item, order: :token)
+      .joins(:food_item, :token, :order)
       .where(orders: { date: Date.current })
       .group("food_items.category")
       .count
@@ -47,7 +47,7 @@ class Admin::DashboardController < ApplicationController
     weekly_range  = 6.days.ago.to_date..Date.current
     order_counts  = Order.where(date: weekly_range).group(:date).count
     redeemed_counts = Token
-      .joins(:order)
+      .joins(order_item: :order)
       .where(orders: { date: weekly_range }, status: :redeemed)
       .group("orders.date")
       .count

@@ -11,17 +11,21 @@
 
   <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
 
-
     <div class="mb-3">
       <label class="form-label ft-label">Email</label>
       <%= f.email_field :email, autofocus: true, autocomplete: "email",
-            class: "form-control ft-input", placeholder: "you@company.com" %>
+            class: "form-control ft-input", placeholder: "Enter your email id" %>
     </div>
 
     <div class="mb-3">
       <label class="form-label ft-label">Password</label>
-      <%= f.password_field :password, autocomplete: "current-password",
-            class: "form-control ft-input", placeholder: "Your password" %>
+      <div class="pw-toggle-container">
+        <%= f.password_field :password, autocomplete: "current-password", id: "pw-field",
+              class: "form-control ft-input", placeholder: "Enter your password" %>
+        <button type="button" class="btn-pw-toggle" data-target="#pw-field">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">

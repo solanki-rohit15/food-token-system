@@ -10,15 +10,13 @@ class Employee::TokensController < ApplicationController
                    .order(created_at: :desc)
                    .page(params[:page]).per(10)
 
-    @active_token         = @tokens.detect { |t| t.redeemable? || t.partially_redeemed? }
+    @active_token         = @tokens.detect(&:redeemable?)
   end
 
   def show
-    @order    = @token.order
-    @food_items  = @order.food_items
-    @order_items = @order.order_items
-                         .includes(:food_item, redemption_requests: :vendor)
-                         .order("food_items.sort_order")
+    @order_item = @token.order_item
+    @order      = @order_item.order
+    @food_item  = @order_item.food_item
 
     @pending_requests = @token.redemption_requests
                               .pending
@@ -34,8 +32,8 @@ class Employee::TokensController < ApplicationController
 
   def set_token
     @token = Token.for_user(current_user)
-                  .includes(order: { order_items: [ :food_item,
-                                                    { redemption_requests: :vendor } ] })
+                  .includes(order_item: [ :food_item, :order,
+                                          { redemption_requests: :vendor } ])
                   .find_by(id: params[:id])
     redirect_to employee_tokens_path, alert: "Token not found." unless @token
   end

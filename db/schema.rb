@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_180434) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_13_073535) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -103,6 +103,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_180434) do
     t.datetime "created_at", null: false
     t.datetime "expires_at", null: false
     t.bigint "order_id", null: false
+    t.bigint "order_item_id"
     t.string "public_token"
     t.datetime "redeemed_at"
     t.bigint "redeemed_by_id"
@@ -112,6 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_180434) do
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_tokens_on_expires_at"
     t.index ["order_id"], name: "index_tokens_on_order_id"
+    t.index ["order_item_id"], name: "index_tokens_on_order_item_id"
     t.index ["public_token"], name: "index_tokens_on_public_token", unique: true
     t.index ["redeemed_by_id"], name: "index_tokens_on_redeemed_by_id"
     t.index ["status", "expires_at"], name: "index_tokens_on_status_and_expires_at"
@@ -172,6 +174,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_180434) do
   add_foreign_key "redemption_requests", "order_items"
   add_foreign_key "redemption_requests", "tokens"
   add_foreign_key "redemption_requests", "users", column: "vendor_id"
+  add_foreign_key "tokens", "order_items"
   add_foreign_key "tokens", "orders"
   add_foreign_key "tokens", "users", column: "redeemed_by_id"
   add_foreign_key "vendor_profiles", "users"

@@ -7,14 +7,14 @@ class Employee::FoodSelectionsController < ApplicationController
     @meal_settings      = MealSetting.all.index_by(&:meal_type)
     @active_categories  = FoodItem.active.ordered.index_by(&:category)
     @ordered_categories = current_user.orders.today
-                                      .joins(:token, :food_items)
+                                      .joins(tokens: { order_item: :food_item })
                                       .where.not(tokens: { status: Token.statuses[:expired] })
                                       .pluck('food_items.category').uniq
   end
 
   def create
     previously_ordered = current_user.orders.today
-                                     .joins(:token, :food_items)
+                                     .joins(tokens: { order_item: :food_item })
                                      .where.not(tokens: { status: Token.statuses[:expired] })
                                      .pluck('food_items.category')
     selected_categories = Array(params[:categories])
@@ -28,10 +28,10 @@ class Employee::FoodSelectionsController < ApplicationController
       return
     end
 
-    token = place_order(selected_categories)
+    success = place_order(selected_categories)
 
-    if token
-      redirect_to employee_token_path(token), notice: "Your food token has been generated! 🎉"
+    if success
+      redirect_to employee_tokens_path, notice: "Your food tokens have been generated! 🎉"
     else
       redirect_to new_employee_food_selection_path,
                   alert: "Could not place order. Please select available meals."
@@ -44,7 +44,7 @@ class Employee::FoodSelectionsController < ApplicationController
 
   def redirect_if_already_ordered
     ordered_categories = current_user.orders.today
-                                     .joins(:token, :food_items)
+                                     .joins(tokens: { order_item: :food_item })
                                      .where.not(tokens: { status: Token.statuses[:expired] })
                                      .pluck('food_items.category').uniq
     available_categories = FoodItem.active.pluck(:category).uniq
@@ -55,7 +55,7 @@ class Employee::FoodSelectionsController < ApplicationController
   end
 
   def place_order(selected_categories)
-    token = nil
+    success = false
     ActiveRecord::Base.transaction do
       order       = current_user.orders.create!(date: Date.current)
       valid_items = FoodItem.active.where(category: selected_categories).select(&:available_now?)
@@ -63,8 +63,9 @@ class Employee::FoodSelectionsController < ApplicationController
       raise ActiveRecord::Rollback if valid_items.empty?
 
       valid_items.each { |item| order.order_items.create!(food_item: item) }
-      token = order.generate_token!
+      # Token generation now happens in OrderItem after_create
+      success = true
     end
-    token
+    success
   end
 end

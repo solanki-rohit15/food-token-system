@@ -43,7 +43,7 @@
         <thead class="table-light">
           <tr>
             <th>Employee</th>
-            <th>Categories</th>
+            <th>Meal Item</th>
             <th>Token No.</th>
             <th>Time</th>
             <th>Status</th>
@@ -61,7 +61,7 @@
                   </div>
                 </div>
               </td>
-              <td class="small"><%= token.order.items_label %></td>
+              <td class="small"><%= token.summary %></td>
               <td><span class="badge bg-light border text-dark font-monospace"><%= token.token_number %></span></td>
               <td class="small text-muted"><%= token.created_at.strftime("%I:%M %p") %></td>
               <td><%= token_status_badge(token) %></td>
@@ -86,4 +86,3 @@
     <% end %>
   </div>
 </div>
-

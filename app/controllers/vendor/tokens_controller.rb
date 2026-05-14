@@ -22,10 +22,10 @@ class Vendor::TokensController < ApplicationController
 
   def show
     @order            = @token.order
-    @employee         = @order.user
-    @order_items      = @order.order_items.includes(:food_item, :redemption_requests)
-    @food_items       = @order.food_items
-    @pending_requests = @token.redemption_requests.pending.includes(:order_item)
+    @employee         = @token.user
+    @order_item       = @token.order_item
+    @food_item        = @token.food_item
+    @pending_requests = @token.redemption_requests.pending
   end
 
   # GET /vendor/tokens/:id/status
@@ -33,16 +33,14 @@ class Vendor::TokensController < ApplicationController
     render json: @token.status_payload
   end
 
-  # POST /vendor/tokens/:id/send_redemption_request?order_item_id=X
-  # Always returns JSON — called via AJAX from scanner.js and token show page
+  # POST /vendor/tokens/:id/send_redemption_request
+  # In single-item system, we don't need order_item_id as it's linked to the token
   def send_redemption_request
-    order_item = @token.order.order_items
-                       .includes(:food_item)
-                       .find_by(id: params[:order_item_id])
+    order_item = @token.order_item
 
-    return render_error("Item not found for this token.", :not_found) unless order_item
     return render_error("#{order_item.food_item.category_label} has already been redeemed.") if order_item.redeemed?
     return render_error("Token is not redeemable (#{@token.status}).") unless @token.redeemable?
+    
     if RedemptionRequest.exists?(order_item_id: order_item.id, status: :pending)
       return render_error("A request is already pending for #{order_item.food_item.category_label}.")
     end
@@ -75,14 +73,14 @@ class Vendor::TokensController < ApplicationController
 
   def build_token_scope
     scope = Token.for_date(@date)
-                 .includes(order: [ :user, :food_items ])
+                 .includes(order_item: [ :food_item, order: :user ])
                  .order(created_at: :desc)
 
     scope = scope.where(status: params[:status]) if params[:status].present?
 
     if params[:search].present?
       q = "%#{params[:search]}%"
-      scope = scope.joins(order: :user)
+      scope = scope.joins(order_item: { order: :user })
                    .where("users.name ILIKE ? OR users.email ILIKE ? OR tokens.token_number ILIKE ?", q, q, q)
     end
 
@@ -99,14 +97,14 @@ class Vendor::TokensController < ApplicationController
         redeemed_at:   token.redeemed_at&.strftime("%I:%M %p"),
         employee_name: token.user.name,
         employee_initials: token.user.initials,
-        categories:    token.order.items_label,
+        categories:    token.summary,
         show_path:     Rails.application.routes.url_helpers.vendor_token_path(token)
       }
     end
   end
 
   def set_token
-    @token = Token.includes(order: [ :user, :food_items, :order_items ]).find_by(id: params[:id])
+    @token = Token.includes(order_item: [ :food_item, order: :user ]).find_by(id: params[:id])
     if @token.nil?
       respond_to do |format|
         format.html { redirect_to vendor_tokens_path, alert: "Token not found." }

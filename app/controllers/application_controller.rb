@@ -73,6 +73,9 @@ class ApplicationController < ActionController::Base
     # C: GPS denied/unavailable — stamp exists but coords nil
     #    Deny immediately; employees must provide location to continue.
     if lat.blank? || lng.blank?
+      session.delete(:user_lat)
+      session.delete(:user_lng)
+      session.delete(:location_at)
       sign_out(current_user)
       redirect_to new_user_session_path,
                   alert: "Location permission is required. Please enable GPS and sign in again."
@@ -83,6 +86,9 @@ class ApplicationController < ActionController::Base
     case Location::Checker.call(lat: lat, lng: lng, setting: setting)
     when :denied
       # Employee is outside the office — sign them out immediately
+      session.delete(:user_lat)
+      session.delete(:user_lng)
+      session.delete(:location_at)
       sign_out(current_user)
       redirect_to new_user_session_path,
                   alert: "Access denied: you are outside the office zone. Please come to the office and sign in again."

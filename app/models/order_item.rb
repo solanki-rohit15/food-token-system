@@ -6,24 +6,15 @@ class OrderItem < ApplicationRecord
   belongs_to :redeemed_by, class_name: "User", optional: true, foreign_key: :redeemed_by_id
 
   has_many :redemption_requests, dependent: :destroy
+  has_one  :token, dependent: :destroy
 
   before_validation :generate_item_code, on: :create
+  after_create      :generate_token!
   after_create      :generate_and_store_signed_qr_token
 
   validates :item_code, presence: true, uniqueness: true
 
   # ── QR: signed URL (no sensitive data in QR payload) ──────────────
-  #
-  # The QR encodes only a full HTTPS URL: https://app.host/qr/<signed_token>
-  # The signed_token is an HMAC-SHA256 signed blob containing ONLY:
-  #   { item_code: "FI-XXXXXXXX", exp: unix_timestamp }
-  # The raw item_code is never visible to the scanner or the QR image consumer.
-  # Tampering with the token string invalidates the HMAC signature.
-  #
-  # Usage:
-  #   item.qr_svg   → returns SVG string to embed in the employee token page
-  #   item.full_qr_url → the URL encoded in the QR (for debugging / regeneration)
-
   def full_qr_url
     host   = ENV.fetch("APP_HOST", "localhost:3000")
     scheme = Rails.env.production? ? "https" : "http"
@@ -53,7 +44,6 @@ class OrderItem < ApplicationRecord
   end
 
   # ── Redeem ────────────────────────────────────────────────────────
-  # Uses a DB-level row lock to prevent double-redemption race condition.
   def redeem!(vendor_user)
     with_lock do
       return false if redeemed?
@@ -61,8 +51,13 @@ class OrderItem < ApplicationRecord
         redeemed_at:    Time.current,
         redeemed_by_id: vendor_user&.id
       )
+      token&.redeem!(vendor_user)
     end
     true
+  end
+
+  def generate_token!
+    create_token!(status: :active, order: order)
   end
 
   # ── Signed QR token management ───────────────────────────────────
@@ -75,8 +70,6 @@ class OrderItem < ApplicationRecord
     token
   end
 
-  # Shared verifier — used by model (generate) and controller (verify).
-  # Key: secret_key_base   Digest: SHA256   Serializer: JSON (not Marshal, for safety)
   def self.qr_verifier
     @qr_verifier ||= ActiveSupport::MessageVerifier.new(
       Rails.application.secret_key_base,

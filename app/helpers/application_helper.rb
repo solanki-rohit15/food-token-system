@@ -27,7 +27,15 @@ module ApplicationHelper
   end
 
   def nav_link(label, path, icon)
-    active  = current_page?(path) || request.path.start_with?(path.split("?").first)
+    base_path = path.split("?").first
+    is_dashboard = [ "/", "/employee", "/vendor", "/admin" ].include?(base_path)
+
+    active = if is_dashboard
+               current_page?(path)
+    else
+               current_page?(path) || request.path.start_with?(base_path)
+    end
+
     classes = [ "nav-link ft-nav-link", active ? "active" : nil ].compact.join(" ")
     link_to(path, class: classes) do
       content_tag(:i, "", class: "bi #{icon} me-1") + " " + label
@@ -44,6 +52,16 @@ module ApplicationHelper
       content_tag(:span, "Vendor", class: "badge bg-info text-dark")
     else
       content_tag(:span, role.to_s.humanize, class: "badge bg-secondary")
+    end
+  end
+
+  def order_item_badge(item)
+    if item.redeemed?
+      content_tag(:span, "✅ Redeemed", class: "badge bg-success-subtle text-success border border-success-subtle")
+    elsif item.pending_redemption_request?
+      content_tag(:span, "⏳ Pending",  class: "badge bg-warning-subtle text-warning border border-warning-subtle")
+    else
+      content_tag(:span, "Not redeemed", class: "badge bg-light border text-dark")
     end
   end
 end

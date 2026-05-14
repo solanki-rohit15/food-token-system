@@ -1,5 +1,5 @@
 <div class="ft-auth-card">
-  <h2 class="ft-auth-title">Change Password</h2>
+  <h2 class="ft-auth-title text-center mb-4">Change Password</h2>
 
   <%= form_for(resource, as: resource_name, url: password_path(resource_name), method: :put) do |f| %>
 
@@ -8,13 +8,24 @@
     <%= f.hidden_field :reset_password_token %>
 
     <div class="mb-3">
-      <label class="form-label">New Password</label>
-      <%= f.password_field :password, class: "form-control ft-input" %>
+      <label class="form-label ft-label">New Password</label>
+      <div class="pw-toggle-container">
+        <%= f.password_field :password, id: "pw-field", class: "form-control ft-input", placeholder: "New password" %>
+        <button type="button" class="btn-pw-toggle" data-target="#pw-field">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Confirm Password</label>
-      <%= f.password_field :password_confirmation, class: "form-control ft-input" %>
+    <div class="mb-4">
+      <label class="form-label ft-label">Confirm Password</label>
+      <div class="pw-toggle-container">
+        <%= f.password_field :password_confirmation, id: "pw-confirm", class: "form-control ft-input", placeholder: "Confirm password" %>
+        <button type="button" class="btn-pw-toggle" data-target="#pw-confirm">
+          <i class="bi bi-eye"></i>
+        </button>
+      </div>
+      <div id="pw-match-hint" class="ft-text-xs mt-1"></div>
     </div>
 
     <%= f.submit "Update Password", class: "btn ft-btn-primary w-100" %>

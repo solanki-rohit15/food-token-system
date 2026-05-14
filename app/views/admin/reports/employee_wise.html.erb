@@ -18,27 +18,28 @@
     <div class="table-responsive">
       <table class="table ft-table align-middle">
         <thead class="table-light">
-          <tr><th>Employee</th><th>Items Ordered</th><th>Token Status</th><th>Time</th></tr>
+          <tr><th>Employee</th><th>Meal Item</th><th>Token Status</th><th>Time</th></tr>
         </thead>
         <tbody>
-          <% @date_orders.each do |order| %>
+          <% @date_tokens.each do |token| %>
+            <% user = token.user %>
             <tr>
               <td>
                 <div class="d-flex align-items-center gap-2">
-                  <div class="ft-avatar-sm"><%= order.user.initials %></div>
+                  <div class="ft-avatar-sm"><%= user.initials %></div>
                   <div>
-                    <div class="fw-semibold small"><%= order.user.name %></div>
-                    <div class="text-muted" style="font-size:11px"><%= order.user.email %></div>
+                    <div class="fw-semibold small"><%= user.name %></div>
+                    <div class="text-muted" style="font-size:11px"><%= user.email %></div>
                   </div>
                 </div>
               </td>
-              <td class="small"><%= order.items_label %></td>
-              <td><%= token_status_badge(order.token) %></td>
-              <td class="small text-muted"><%= order.created_at.strftime("%I:%M %p") %></td>
+              <td class="small"><%= token.summary %></td>
+              <td><%= token_status_badge(token) %></td>
+              <td class="small text-muted"><%= token.created_at.strftime("%I:%M %p") %></td>
             </tr>
           <% end %>
-          <% if @date_orders.empty? %>
-            <tr><td colspan="5" class="text-center text-muted py-4">No orders on this date.</td></tr>
+          <% if @date_tokens.empty? %>
+            <tr><td colspan="4" class="text-center text-muted py-4">No tokens on this date.</td></tr>
           <% end %>
         </tbody>
       </table>

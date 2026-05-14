@@ -1,6 +1,7 @@
 require "rqrcode"
 
 class Token < ApplicationRecord
+  belongs_to :order_item
   belongs_to :order
   belongs_to :redeemed_by_user, class_name: "User", foreign_key: :redeemed_by_id, optional: true
   has_many   :redemption_requests, dependent: :destroy
@@ -18,18 +19,23 @@ class Token < ApplicationRecord
   validates :public_token, uniqueness: true, allow_nil: true
 
 
-  scope :today,      -> { joins(:order).where(orders: { date: Date.current }) }
-  scope :this_month, -> { joins(:order).where(orders: { date: Date.current.beginning_of_month..Date.current.end_of_month }) }
-  scope :for_user,   ->(user) { joins(:order).where(orders: { user_id: user.id }) }
+  scope :today,      -> { joins(order_item: :order).where(orders: { date: Date.current }) }
+  scope :this_month, -> { joins(order_item: :order).where(orders: { date: Date.current.beginning_of_month..Date.current.end_of_month }) }
+  scope :for_user,   ->(user) { joins(order_item: :order).where(orders: { user_id: user.id }) }
   scope :by_status,  ->(s) { where(status: s) }
-  scope :for_date,   ->(date) { joins(:order).where(orders: { date: date }) }
+  scope :for_date,   ->(date) { joins(order_item: :order).where(orders: { date: date }) }
   scope :expired_by_time, -> { where("expires_at < ?", Time.current).where.not(status: statuses[:redeemed]) }
   scope :expired_effective, lambda {
     where(status: statuses[:expired])
       .or(where("expires_at < ? AND status != ?", Time.current, statuses[:redeemed]))
   }
 
-  delegate :user, :food_items, :summary, to: :order
+  delegate :user, to: :order
+  delegate :food_item, to: :order_item
+
+  def summary
+    "#{food_item.icon} #{food_item.category_label}"
+  end
 
 
   def expired_by_time? = expires_at.present? && expires_at < Time.current
@@ -38,38 +44,26 @@ class Token < ApplicationRecord
   def pending_request? = redemption_requests.pending.exists?
   def fully_redeemed?  = status == "redeemed"
 
-  def redeemed_items_count = order.order_items.count { |oi| oi.redeemed_at.present? }
-  def pending_items_count  = order.order_items.count { |oi| oi.redeemed_at.nil? }
-  def partially_redeemed?  = active? && redeemed_items_count > 0
 
 
   def status_payload
-    order_items_data = order.order_items.includes(:food_item).map do |oi|
-      {
-        item_code:      oi.item_code,
-        category:       oi.food_item.category,
-        category_label: oi.food_item.category_label,
-        redeemed:       oi.redeemed?,
-        redeemed_at:    oi.redeemed_at&.strftime("%I:%M %p")
-      }
-    end
-
-    pending = redemption_requests
-                    .pending
-                    .includes(:vendor, order_item: :food_item)
-                    .map do |req|
-      { id: req.id, vendor_name: req.vendor.name,
-        category: req.order_item.food_item.category_label,
-        item_code: req.order_item.item_code }
-    end
-
     {
       token_status:       status,
-      fully_redeemed:     fully_redeemed?,
-      partially_redeemed: partially_redeemed?,
+      fully_redeemed:     redeemed?,
+      partially_redeemed: false,
       expired:            expired?,
-      order_items:        order_items_data,
-      pending_requests:   pending
+      order_items: [
+        {
+          item_code:      order_item.item_code,
+          category:       food_item.category,
+          category_label: food_item.category_label,
+          redeemed:       order_item.redeemed?,
+          redeemed_at:    order_item.redeemed_at&.strftime("%I:%M %p")
+        }
+      ],
+      pending_requests: redemption_requests.pending.includes(:vendor).map { |req|
+        { id: req.id, vendor_name: req.vendor.name, category: food_item.category_label, item_code: order_item.item_code }
+      }
     }
   end
 

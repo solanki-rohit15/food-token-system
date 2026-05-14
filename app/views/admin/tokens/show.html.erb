@@ -20,7 +20,7 @@
           <hr>
           <div class="d-flex justify-content-between ft-meta-row small">
             <span class="text-muted">Date</span>
-            <span><%= @order.date.strftime("%d %b %Y") %></span>
+            <span><%= @token.order.date.strftime("%d %b %Y") %></span>
           </div>
           <div class="d-flex justify-content-between ft-meta-row small">
             <span class="text-muted">Created</span>
@@ -30,9 +30,9 @@
             <span class="text-muted">Expires</span>
             <span><%= @token.expires_at.strftime("%I:%M %p") %></span>
           </div>
-          <% if @token.fully_redeemed? %>
+          <% if @token.redeemed? %>
             <div class="d-flex justify-content-between ft-meta-row small text-success">
-              <span>Fully Redeemed</span>
+              <span>Redeemed</span>
               <span><%= @token.redeemed_at.strftime("%I:%M %p") %></span>
             </div>
           <% end %>
@@ -40,41 +40,40 @@
       </div>
 
       <div class="col-md-8">
-        <div class="ft-section-label mb-2">Order Items & Redemption History</div>
-        <% @order.order_items.each do |item| %>
-          <div class="card mb-3 <%= item.redeemed? ? 'border-success' : 'border-light' %>">
-            <div class="card-header d-flex justify-content-between align-items-center py-2">
-              <span class="fw-semibold">
-                <%= item.food_item.icon %> <%= item.food_item.category_label %>
-              </span>
-              <%= order_item_badge(item) %>
-            </div>
-            <div class="card-body py-2 px-3">
-              <div class="text-muted ft-text-xs font-monospace mb-2"><%= item.item_code %></div>
-              <% if item.redeemed? %>
-                <div class="text-success small">
-                  Redeemed by <%= item.redeemed_by&.name || "unknown" %> at
-                  <%= item.redeemed_at.strftime("%I:%M %p") %>
-                </div>
-              <% end %>
-              <% reqs = item.redemption_requests.includes(:vendor).order(created_at: :desc) %>
-              <% if reqs.any? %>
-                <div class="mt-2">
-                  <div class="ft-text-xs text-muted fw-semibold mb-1">Request History</div>
-                  <% reqs.each do |req| %>
-                    <div class="d-flex gap-2 align-items-center ft-text-xs text-muted">
-                      <span class="badge bg-<%= req.approved? ? 'success' : req.rejected? ? 'danger' : 'warning text-dark' %>">
-                        <%= req.status.capitalize %>
-                      </span>
-                      <span><%= req.vendor.name %></span>
-                      <span><%= req.created_at.strftime("%I:%M %p") %></span>
-                    </div>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
+        <div class="ft-section-label mb-2">Meal Item Details</div>
+        <% item = @token.order_item %>
+        <div class="card mb-3 <%= item.redeemed? ? 'border-success' : 'border-light' %>">
+          <div class="card-header d-flex justify-content-between align-items-center py-2">
+            <span class="fw-semibold">
+              <%= item.food_item.icon %> <%= item.food_item.category_label %>
+            </span>
+            <%= order_item_badge(item) %>
           </div>
-        <% end %>
+          <div class="card-body py-2 px-3">
+            <div class="text-muted ft-text-xs font-monospace mb-2"><%= item.item_code %></div>
+            <% if item.redeemed? %>
+              <div class="text-success small">
+                Redeemed by <%= item.redeemed_by&.name || "unknown" %> at
+                <%= item.redeemed_at.strftime("%I:%M %p") %>
+              </div>
+            <% end %>
+            <% reqs = item.redemption_requests.includes(:vendor).order(created_at: :desc) %>
+            <% if reqs.any? %>
+              <div class="mt-2">
+                <div class="ft-text-xs text-muted fw-semibold mb-1">Request History</div>
+                <% reqs.each do |req| %>
+                  <div class="d-flex gap-2 align-items-center ft-text-xs text-muted mb-1">
+                    <span class="badge bg-<%= req.approved? ? 'success' : req.rejected? ? 'danger' : 'warning text-dark' %>">
+                      <%= req.status.capitalize %>
+                    </span>
+                    <span><%= req.vendor.name %></span>
+                    <span><%= req.created_at.strftime("%I:%M %p") %></span>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
       </div>
     </div>
   </div>

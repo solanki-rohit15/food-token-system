@@ -51,7 +51,7 @@
               <div>
                 <div class="ft-token-number">Token #<%= token.id.to_s.rjust(6, "0") %></div>
                 <div class="ft-token-items mt-1 text-muted small">
-                  <%= token.order.items_label(separator: " · ") %>
+                  <%= token.summary %>
                 </div>
               </div>
               <% if token.active? %>
@@ -106,7 +106,7 @@
                 <div>
                   <div class="ft-token-number">Token #<%= token.id.to_s.rjust(6, "0") %></div>
                   <div class="ft-token-items mt-1 text-muted small">
-                    <%= token.order.items_label(separator: " · ") %>
+                    <%= token.summary %>
                   </div>
                 </div>
                 <span class="badge bg-secondary">Expired</span>

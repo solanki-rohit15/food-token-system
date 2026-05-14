@@ -86,7 +86,7 @@
                 </div>
               </td>
 
-              <td class="small"><%= token.order.items_label %></td>
+              <td class="small"><%= token.summary %></td>
               <td><span class="badge bg-light border text-dark font-monospace">#<%= token.id.to_s.rjust(6,"0") %></span></td>
               <td><%= token_status_badge(token) %></td>
               <td class="small text-muted"><%= token.redeemed_at&.strftime("%I:%M %p") || "—" %></td>

@@ -1,10 +1,8 @@
 <div class="ft-token-row-card">
   <div class="d-flex align-items-center gap-3">
     <div class="ft-token-row-icon">
-      <% if token.fully_redeemed? %>
+      <% if token.redeemed? %>
         <i class="bi bi-check-circle-fill text-success fs-4"></i>
-      <% elsif token.partially_redeemed? %>
-        <i class="bi bi-circle-half text-info fs-4"></i>
       <% elsif token.expired? %>
         <i class="bi bi-clock-history text-muted fs-4"></i>
       <% else %>
@@ -15,7 +13,7 @@
       <div class="d-flex justify-content-between align-items-start">
         <div>
           <div class="fw-semibold small">
-            <%= token.order.items_label %>
+            <%= token.food_item.icon %> <%= token.food_item.category_label %>
           </div>
           <div class="text-muted ft-text-xs">
             <%= token.order.date.strftime("%d %b %Y") %> &bull; <%= token.token_number %>
@@ -23,14 +21,9 @@
         </div>
         <%= token_status_badge(token) %>
       </div>
-      <% if token.fully_redeemed? %>
+      <% if token.redeemed? %>
         <div class="text-success small mt-1">
-          <i class="bi bi-check me-1"></i>Fully redeemed at <%= token.redeemed_at&.strftime("%I:%M %p") %>
-        </div>
-      <% elsif token.partially_redeemed? %>
-        <div class="text-info small mt-1">
-          <i class="bi bi-circle-half me-1"></i>
-          <%= token.redeemed_items_count %> of <%= token.order.order_items.count %> items redeemed
+          <i class="bi bi-check me-1"></i>Redeemed at <%= token.redeemed_at&.strftime("%I:%M %p") %>
         </div>
       <% elsif token.active? && !token.expired_by_time? %>
         <div class="text-warning small mt-1">
@@ -43,4 +36,3 @@
     <% end %>
   </div>
 </div>
-

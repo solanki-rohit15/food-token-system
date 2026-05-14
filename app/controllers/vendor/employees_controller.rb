@@ -2,13 +2,15 @@ class Vendor::EmployeesController < ApplicationController
   before_action :require_vendor!
 
   def index
-    @employees = User.employees.active
-                     .includes(:employee_profile, orders: [ :food_items, :token ])
-                     .order(:name)
+    @tokens = Token.today
+                   .includes(order_item: [ :food_item, order: :user ])
+                   .order("users.name ASC")
   end
 
   def show
     @employee = User.employees.find(params[:id])
-    @today_orders = @employee.orders.today.includes(:food_items, :token).order(created_at: :asc)
+    @tokens = Token.for_user(@employee).today
+                   .includes(order_item: :food_item)
+                   .order(created_at: :asc)
   end
 end

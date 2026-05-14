@@ -10,25 +10,21 @@ class Admin::TokensController < ApplicationController
   end
 
   def show
-    @token    = Token.includes(
-                  order: [ :user, { order_items: [ :food_item, :redeemed_by,
-                                                  { redemption_requests: :vendor } ] } ]
-                ).find(params[:id])
-    @order    = @token.order
-    @employee = @order.user
+    @token    = Token.includes(order_item: [ :food_item, :order, :redemption_requests ]).find(params[:id])
+    @employee = @token.user
   end
 
   private
 
   def base_tokens_scope
     Token.for_date(@date)
-         .includes(order: [ :user, { order_items: :food_item }, :food_items ])
+         .includes(order_item: [ :food_item, order: :user ])
          .order(created_at: :desc)
   end
 
   def apply_search(scope)
     q = "%#{params[:search]}%"
-    scope.joins(order: :user)
+    scope.joins(order_item: { order: :user })
          .where("users.name ILIKE ? OR users.email ILIKE ? OR tokens.token_number ILIKE ?", q, q, q)
   end
 end

@@ -25,53 +25,53 @@
           <div class="d-flex justify-content-between small text-muted mt-1">
             <span>Expires</span><span><%= @token.expires_at.strftime("%I:%M %p") %></span>
           </div>
-          <% if @token.fully_redeemed? %>
+          <% if @token.redeemed? %>
             <div class="d-flex justify-content-between small text-success mt-1">
-              <span>Fully redeemed</span><span><%= @token.redeemed_at.strftime("%I:%M %p") %></span>
+              <span>Redeemed</span><span><%= @token.redeemed_at.strftime("%I:%M %p") %></span>
             </div>
           <% end %>
         </div>
       </div>
 
       <div class="col-md-8">
-        <div class="ft-section-label mb-2">Items & Redemption Status</div>
-        <% @order_items.each do |item| %>
-          <% pending_for_item = @pending_requests.any? { |r| r.order_item_id == item.id } %>
-          <div class="card mb-3 <%= item.redeemed? ? 'border-success' : 'border-primary' %>">
-            <div class="card-header d-flex align-items-center justify-content-between py-2">
-              <span class="fw-semibold"><%= item.food_item.icon %> <%= item.food_item.category_label %></span>
-              <% if item.redeemed? %>
-                <span class="badge bg-success">✅ <%= item.redeemed_at&.strftime("%I:%M %p") %></span>
-              <% elsif pending_for_item %>
-                <span class="badge bg-warning text-dark">⏳ Waiting</span>
-              <% else %>
-                <span class="badge bg-light border text-dark">Not redeemed</span>
-              <% end %>
-            </div>
-            <div class="card-body py-2 px-3">
-              <div class="small text-muted font-monospace mb-2"><%= item.item_code %></div>
-              <% if item.redeemed? %>
-                <div class="text-success small">
-                  <i class="bi bi-check-circle me-1"></i>Redeemed by <%= item.redeemed_by&.name || "vendor" %>
-                </div>
-              <% elsif pending_for_item %>
-                <div class="text-warning small">
-                  <i class="bi bi-hourglass-split me-1"></i>Waiting for employee approval
-                </div>
-              <% elsif @token.redeemable? %>
-                <%# data attributes used by app_ui.js — no inline onclick needed %>
-                <button class="btn btn-sm btn-outline-primary mt-1 send-redemption-btn"
-                        data-item-id="<%= item.id %>"
-                        data-label="<%= item.food_item.category_label %>"
-                        data-url="<%= send_redemption_request_vendor_token_path(@token) %>">
-                  <i class="bi bi-send me-1"></i>Request Redemption
-                </button>
-              <% else %>
-                <div class="text-muted small">Token not redeemable</div>
-              <% end %>
-            </div>
+        <div class="ft-section-label mb-2">Meal Item</div>
+        <% item = @order_item %>
+        <% pending_for_item = @token.pending_request? %>
+        
+        <div class="card mb-3 <%= item.redeemed? ? 'border-success' : 'border-primary' %>">
+          <div class="card-header d-flex align-items-center justify-content-between py-2">
+            <span class="fw-semibold"><%= item.food_item.icon %> <%= item.food_item.category_label %></span>
+            <% if item.redeemed? %>
+              <span class="badge bg-success">✅ <%= item.redeemed_at&.strftime("%I:%M %p") %></span>
+            <% elsif pending_for_item %>
+              <span class="badge bg-warning text-dark">⏳ Waiting</span>
+            <% else %>
+              <span class="badge bg-light border text-dark">Not redeemed</span>
+            <% end %>
           </div>
-        <% end %>
+          <div class="card-body py-2 px-3">
+            <div class="small text-muted font-monospace mb-2"><%= item.item_code %></div>
+            <% if item.redeemed? %>
+              <div class="text-success small">
+                <i class="bi bi-check-circle me-1"></i>Redeemed by <%= item.redeemed_by&.name || "vendor" %>
+              </div>
+            <% elsif pending_for_item %>
+              <div class="text-warning small">
+                <i class="bi bi-hourglass-split me-1"></i>Waiting for employee approval
+              </div>
+            <% elsif @token.redeemable? %>
+              <%# data attributes used by app_ui.js — no inline onclick needed %>
+              <button class="btn btn-sm btn-outline-primary mt-1 send-redemption-btn"
+                      data-item-id="<%= item.id %>"
+                      data-label="<%= item.food_item.category_label %>"
+                      data-url="<%= send_redemption_request_vendor_token_path(@token) %>">
+                <i class="bi bi-send me-1"></i>Request Redemption
+              </button>
+            <% else %>
+              <div class="text-muted small">Token not redeemable</div>
+            <% end %>
+          </div>
+        </div>
       </div>
     </div>
   </div>
